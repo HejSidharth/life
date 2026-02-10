@@ -1,20 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  Trophy, 
-  ChevronRight, 
-  History, 
-  Trash2, 
-  Plus, 
-  Clock, 
-  Dumbbell, 
-  ChevronDown, 
-  ChevronUp, 
-  CheckCircle2, 
-  XCircle, 
-  MoreVertical 
-} from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -189,36 +175,24 @@ export function WorkoutSession({
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+          <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
             <div className="flex items-center gap-1">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
               <span>{formatDuration(elapsedSeconds)}</span>
             </div>
             <div>
-              <span className="font-medium text-foreground">{completedSets}</span>
+              <span className="text-zinc-200">{completedSets}</span>
               /{totalSets} sets
             </div>
             {totalVolume > 0 && (
               <div>
-                <span className="font-medium text-foreground">
+                <span className="text-zinc-200">
                   {totalVolume.toLocaleString()}
                 </span>{" "}
                 vol
               </div>
             )}
             {prCount > 0 && (
-              <div className="text-white font-medium flex items-center gap-1">
-                <Trophy className="w-3.5 h-3.5" />
+              <div className="text-white">
                 {prCount} PR{prCount !== 1 ? "s" : ""}
               </div>
             )}
@@ -266,21 +240,9 @@ export function WorkoutSession({
       {/* Add Exercise Button */}
       <Button
         variant="outline"
-        className="w-full"
+        className="w-full h-14 rounded-2xl border-dashed border-zinc-800 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 hover:text-white"
         onClick={() => setIsExercisePickerOpen(true)}
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          className="mr-2"
-        >
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
         Add Exercise
       </Button>
 

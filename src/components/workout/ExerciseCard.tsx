@@ -97,69 +97,26 @@ export function ExerciseCard({
             </button>
           </div>
 
-          <div className="flex items-center gap-1">
-            {onSupersetGroupChange && (
-              <Select
-                value={exercise.supersetGroup ? exercise.supersetGroup.toString() : "none"}
-                onChange={(event) =>
-                  onSupersetGroupChange(
-                    event.target.value === "none"
-                      ? null
-                      : Number(event.target.value)
-                  )
-                }
-                className="h-8 w-[88px] px-2 py-1 text-xs"
-              >
-                <option value="none">Solo</option>
-                {Array.from({ length: maxSupersetGroups }, (_, index) => {
-                  const group = index + 1;
-                  return (
-                    <option key={group} value={group.toString()}>
-                      SS {group}
-                    </option>
-                  );
-                })}
-              </Select>
-            )}
+          <div className="flex items-center gap-2">
             {onViewHistory && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onViewHistory}
-                className="h-8 w-8 p-0"
+                className="h-8 px-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white"
                 title="View history"
               >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
+                History
               </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
               onClick={handleRemove}
-              className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+              className="h-8 px-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-destructive"
               title="Remove exercise"
             >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
+              Remove
             </Button>
           </div>
         </div>
@@ -214,20 +171,8 @@ export function ExerciseCard({
             variant="outline"
             size="sm"
             onClick={onAddSet}
-            className="w-full mt-3"
+            className="w-full mt-3 h-10 rounded-2xl border-zinc-800 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white"
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="mr-2"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
             Add Set
           </Button>
 

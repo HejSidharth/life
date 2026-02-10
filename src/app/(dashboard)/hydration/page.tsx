@@ -3,9 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { 
-  Plus, 
-  ChevronRight, 
-  Trash2
+  ChevronRight
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -188,7 +186,6 @@ function HydrationContent() {
         className="w-full h-14 rounded-2xl border-dashed border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-semibold"
         onClick={() => setIsDialogOpen(true)}
       >
-        <Plus className="w-4 h-4 mr-2" />
         Log Custom Amount
       </Button>
 
@@ -224,9 +221,9 @@ function HydrationContent() {
                     <span className="font-bold text-zinc-300">{h.amount}<span className="text-[10px] ml-0.5 text-zinc-500">ml</span></span>
                     <button 
                       onClick={() => removeHydration({ id: h._id as Id<"hydration"> })}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                      className="h-8 px-2 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      Delete
                     </button>
                   </div>
                 </motion.div>

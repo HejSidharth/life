@@ -6,15 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { 
-  ArrowRight, 
-  Utensils, 
-  Dumbbell, 
-  Droplets,
-  Zap,
-  Shield,
-  Smartphone
-} from "lucide-react";
 
 const springTransition = {
   type: "spring" as const,
@@ -106,7 +97,6 @@ export default function HomePage() {
             <Link href="/sign-up">
               <Button size="lg" className="h-16 px-10 bg-white text-black hover:bg-zinc-200 text-lg font-bold rounded-2xl group shadow-2xl shadow-white/5">
                 Start Tracking
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <Button variant="ghost" size="lg" className="h-16 px-10 text-zinc-400 hover:text-white hover:bg-white/5 text-lg font-bold rounded-2xl">
@@ -118,19 +108,16 @@ export default function HomePage() {
         {/* Feature Grid */}
         <div className="mt-40 grid grid-cols-1 md:grid-cols-3 gap-6">
           <FeatureCard 
-            icon={<Utensils className="w-6 h-6" />}
             title="Nutrition"
             description="Log meals with detailed macros. Precision tracking for calories, protein, and more."
             delay={0.5}
           />
           <FeatureCard 
-            icon={<Dumbbell className="w-6 h-6" />}
             title="Training"
             description="Advanced workout logging. Sets, reps, RPE, and automatic PR detection."
             delay={0.6}
           />
           <FeatureCard 
-            icon={<Droplets className="w-6 h-6" />}
             title="Hydration"
             description="Intelligent fluid tracking. Stay optimized with visual hydration rings."
             delay={0.7}
@@ -154,15 +141,12 @@ export default function HomePage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 pt-6">
             <div className="flex items-center gap-2 text-zinc-400 font-bold uppercase tracking-widest text-[10px]">
-              <Shield className="w-4 h-4" />
               Private
             </div>
             <div className="flex items-center gap-2 text-zinc-400 font-bold uppercase tracking-widest text-[10px]">
-              <Zap className="w-4 h-4" />
               Fast
             </div>
             <div className="flex items-center gap-2 text-zinc-400 font-bold uppercase tracking-widest text-[10px]">
-              <Smartphone className="w-4 h-4" />
               Native Feel
             </div>
           </div>
@@ -183,7 +167,7 @@ export default function HomePage() {
   );
 }
 
-function FeatureCard({ icon, title, description, delay }: { icon: React.ReactNode, title: string, description: string, delay: number }) {
+function FeatureCard({ title, description, delay }: { title: string, description: string, delay: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -193,9 +177,6 @@ function FeatureCard({ icon, title, description, delay }: { icon: React.ReactNod
       whileHover={{ y: -5 }}
       className="p-8 rounded-[2rem] bg-zinc-900/50 border border-white/5 hover:border-white/10 transition-all group shadow-sm"
     >
-      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform">
-        {icon}
-      </div>
       <h3 className="text-xl font-bold mb-3">{title}</h3>
       <p className="text-zinc-500 font-medium text-sm leading-relaxed">{description}</p>
     </motion.div>

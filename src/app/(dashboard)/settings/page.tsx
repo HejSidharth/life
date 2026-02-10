@@ -3,18 +3,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, Suspense } from "react";
 import { 
-  Settings, 
-  Target, 
-  Key, 
   ChevronRight, 
-  Plus, 
-  Copy, 
-  Trash2, 
-  BookOpen,
   Check,
-  Shield,
-  Smartphone,
-  ExternalLink
+  Copy
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -128,9 +119,6 @@ function SettingsContent() {
       <Card className="border-0 bg-zinc-900/30">
         <CardContent className="p-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center border border-white/5">
-              <Settings className="w-8 h-8 text-zinc-500" />
-            </div>
             <div>
               <h2 className="text-xl font-bold">{user?.fullName || "Your Account"}</h2>
               <p className="text-sm text-zinc-500">{user?.primaryEmailAddress?.emailAddress}</p>
@@ -152,7 +140,6 @@ function SettingsContent() {
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Target className="w-5 h-5 text-zinc-400" />
             Daily Goals
           </h2>
           <Button 
@@ -161,7 +148,6 @@ function SettingsContent() {
             onClick={() => setIsGoalDialogOpen(true)}
             className="text-zinc-400 hover:text-white"
           >
-            <Plus className="w-4 h-4 mr-1" />
             Add
           </Button>
         </div>
@@ -182,7 +168,6 @@ function SettingsContent() {
                       </span>
                     </p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-zinc-700" />
                 </CardContent>
               </Card>
             </motion.div>
@@ -194,7 +179,6 @@ function SettingsContent() {
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Key className="w-5 h-5 text-zinc-400" />
             API Keys
           </h2>
           <Button 
@@ -203,7 +187,6 @@ function SettingsContent() {
             onClick={() => setIsApiKeyDialogOpen(true)}
             className="text-zinc-400 hover:text-white"
           >
-            <Plus className="w-4 h-4 mr-1" />
             Create
           </Button>
         </div>
@@ -218,9 +201,6 @@ function SettingsContent() {
               <Card key={key._id} className="border-0 bg-zinc-950/50 shadow-sm border border-white/5 group">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center text-zinc-500">
-                      <Shield className="w-5 h-5" />
-                    </div>
                     <div>
                       <h3 className="font-semibold text-zinc-200">{key.name}</h3>
                       <p className="text-xs text-zinc-500 font-mono">
@@ -230,9 +210,9 @@ function SettingsContent() {
                   </div>
                   <button 
                     onClick={() => revokeApiKey({ id: key._id as Id<"apiKeys"> })}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                    className="h-8 px-2 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    Revoke
                   </button>
                 </CardContent>
               </Card>
@@ -245,7 +225,6 @@ function SettingsContent() {
       <Card className="border-0 bg-zinc-900/10 border border-white/5">
         <CardContent className="p-6 space-y-4">
           <h3 className="text-lg font-bold flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-zinc-400" />
             OpenClaw & API Access
           </h3>
           <p className="text-sm text-zinc-500 leading-relaxed">
@@ -253,7 +232,7 @@ function SettingsContent() {
           </p>
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" size="sm" className="bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-bold">
-              View API Docs <ExternalLink className="w-3 h-3 ml-2" />
+              View API Docs
             </Button>
             <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white text-xs font-bold">
               OpenClaw Setup

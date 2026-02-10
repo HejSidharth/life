@@ -3,9 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, Suspense } from "react";
 import { 
-  Plus, 
   ChevronRight, 
-  Trash2, 
   Search,
   History,
   Flame,
@@ -198,7 +196,6 @@ function FoodContent() {
           onClick={() => setIsDialogOpen(true)}
           className="w-full h-16 rounded-3xl bg-white text-black hover:bg-zinc-200 text-lg font-bold shadow-xl shadow-white/5"
         >
-          <Plus className="w-5 h-5 mr-2" />
           Add Food Entry
         </Button>
       </motion.div>
@@ -223,7 +220,6 @@ function FoodContent() {
                     setIsDialogOpen(true);
                   }}
                 >
-                  <Plus className="w-4 h-4 text-zinc-700 mr-2" />
                   <span className="text-xs font-bold text-zinc-700 uppercase tracking-widest">Log {type}</span>
                 </div>
               ) : (
@@ -246,9 +242,9 @@ function FoodContent() {
                       <span className="font-bold text-zinc-300">{food.calories}<span className="text-[10px] ml-0.5 text-zinc-500 font-bold uppercase">kcal</span></span>
                       <button 
                         onClick={() => removeFood({ id: food._id as Id<"foods"> })}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                        className="h-8 px-2 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        Delete
                       </button>
                     </div>
                   </motion.div>

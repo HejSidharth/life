@@ -3,19 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useMemo, Suspense } from "react";
 import { 
-  Plus, 
-  History, 
-  ChevronRight, 
-  Trophy, 
-  Clock, 
-  Dumbbell, 
-  Play, 
-  Settings,
-  MoreVertical,
-  Trash2,
-  CheckCircle2,
-  XCircle,
-  Timer
+  ChevronRight
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
@@ -216,7 +204,6 @@ function ExerciseContent() {
             onClick={() => setShowStartDialog(true)}
             className="w-full h-20 rounded-3xl bg-white text-black hover:bg-zinc-200 text-lg font-bold shadow-xl shadow-white/5"
           >
-            <Play className="w-6 h-6 mr-3 fill-current" />
             {isToday ? "Start New Workout" : "Log Training Session"}
           </Button>
         </motion.div>
@@ -232,7 +219,6 @@ function ExerciseContent() {
         <div className="flex items-center justify-between px-1">
           <h2 className="text-lg font-semibold">Templates</h2>
           <Button variant="ghost" size="sm" className="text-primary hover:bg-white/5">
-            <Plus className="w-4 h-4 mr-1" />
             New
           </Button>
         </div>
@@ -255,20 +241,17 @@ function ExerciseContent() {
                   className="cursor-pointer overflow-hidden bg-card border-border/50 hover:border-white/20 transition-all shadow-sm"
                   onClick={() => handleStartTemplate(template._id)}
                 >
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-zinc-400">
-                        <Dumbbell className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-white">{template.name}</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {template.exercises.length} exercises
-                        </p>
-                      </div>
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <h3 className="font-semibold text-white">{template.name}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {template.exercises.length} exercises
+                      </p>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-zinc-600" />
-                  </CardContent>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-zinc-600" />
+                </CardContent>
                 </Card>
               </motion.div>
             ))}
@@ -291,7 +274,6 @@ function ExerciseContent() {
             transition={springTransition}
           >
             Full History
-            <History className="w-4 h-4 ml-1.5" />
           </motion.button>
         </div>
 
@@ -311,9 +293,6 @@ function ExerciseContent() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center">
-                          <CheckCircle2 className="w-5 h-5 text-zinc-500" />
-                        </div>
                         <div>
                           <h3 className="font-medium text-zinc-200">{workout.name}</h3>
                           <p className="text-xs text-zinc-500">
@@ -328,7 +307,6 @@ function ExerciseContent() {
                       
                       <div className="text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          <Trophy className="w-3.5 h-3.5 text-zinc-400" />
                           <span className="text-xs font-bold text-zinc-300">
                             {workout.totalVolume.toLocaleString()} lbs
                           </span>

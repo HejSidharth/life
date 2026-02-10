@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { format, isSameDay, addDays, subDays, startOfMonth, endOfMonth } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import { 
@@ -44,21 +43,21 @@ export function CalendarStrip({ selectedDate, onDateChange }: CalendarStripProps
           </span>
         </div>
         
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => onDateChange(subDays(selectedDate, 1))}
-            className="p-1 hover:bg-zinc-800 rounded-md transition-colors"
+            className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white px-2 py-1 transition-colors"
           >
-            <ChevronLeft className="w-4 h-4 text-zinc-500" />
+            Prev
           </button>
           
           <FullCalendarDialog selectedDate={selectedDate} onDateChange={onDateChange} />
           
           <button
             onClick={() => onDateChange(addDays(selectedDate, 1))}
-            className="p-1 hover:bg-zinc-800 rounded-md transition-colors"
+            className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white px-2 py-1 transition-colors"
           >
-            <ChevronRight className="w-4 h-4 text-zinc-500" />
+            Next
           </button>
         </div>
       </div>
@@ -148,19 +147,19 @@ function FullCalendarDialog({ selectedDate, onDateChange }: CalendarStripProps) 
             <div className="flex gap-2">
               <Button 
                 variant="secondary" 
-                size="icon" 
-                className="w-8 h-8 rounded-xl bg-zinc-900"
+                size="sm" 
+                className="h-8 px-3 rounded-xl bg-zinc-900 text-[10px] font-black uppercase tracking-widest"
                 onClick={() => setCurrentMonth(subDays(startOfMonth(currentMonth), 1))}
               >
-                <ChevronLeft className="w-4 h-4" />
+                Prev
               </Button>
               <Button 
                 variant="secondary" 
-                size="icon" 
-                className="w-8 h-8 rounded-xl bg-zinc-900"
+                size="sm" 
+                className="h-8 px-3 rounded-xl bg-zinc-900 text-[10px] font-black uppercase tracking-widest"
                 onClick={() => setCurrentMonth(addDays(endOfMonth(currentMonth), 1))}
               >
-                <ChevronRight className="w-4 h-4" />
+                Next
               </Button>
             </div>
           </div>

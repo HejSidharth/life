@@ -4,14 +4,8 @@ import { motion } from "framer-motion";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { 
-  Flame, 
-  Beef, 
-  Droplets, 
-  Dumbbell, 
   ChevronRight,
-  Plus,
-  Trophy,
-  Activity as ActivityIcon
+  Plus
 } from "lucide-react";
 import { WidgetCard } from "@/components/widgets/WidgetCard";
 import { ContributionHeatmap } from "@/components/widgets/ContributionHeatmap";
@@ -125,15 +119,6 @@ function DashboardContent() {
 
   const recentActivity: Activity[] = (recentActivityRaw as any) || [];
 
-  const getActivityIcon = (type: Activity["type"]) => {
-    switch (type) {
-      case "exercise": return <Dumbbell className="w-5 h-5" />;
-      case "hydration": return <Droplets className="w-5 h-5" />;
-      case "pr": return <Trophy className="w-5 h-5" />;
-      default: return <ActivityIcon className="w-5 h-5" />;
-    }
-  };
-
   if (!userLoaded) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -175,7 +160,6 @@ function DashboardContent() {
             title="Calories"
             value={todayStats.food.calories}
             subtitle={`/ ${todayStats.goals.calories} kcal`}
-            icon={<Flame className="w-5 h-5" />}
             progress={{
               value: todayStats.food.calories,
               max: todayStats.goals.calories,
@@ -190,7 +174,6 @@ function DashboardContent() {
             title="Protein"
             value={`${todayStats.food.protein}g`}
             subtitle={`/ ${todayStats.goals.protein}g`}
-            icon={<Beef className="w-5 h-5" />}
             progress={{
               value: todayStats.food.protein,
               max: todayStats.goals.protein,
@@ -205,7 +188,6 @@ function DashboardContent() {
             title="Water"
             value={`${(todayStats.water.current / 1000).toFixed(1)}L`}
             subtitle={`/ ${(todayStats.goals.water / 1000).toFixed(1)}L`}
-            icon={<Droplets className="w-5 h-5" />}
             progress={{
               value: todayStats.water.current,
               max: todayStats.goals.water,
@@ -220,7 +202,6 @@ function DashboardContent() {
             title="Exercise"
             value={`${todayStats.exercise.minutes}m`}
             subtitle={`/ ${todayStats.goals.exerciseMinutes} min`}
-            icon={<Dumbbell className="w-5 h-5" />}
             progress={{
               value: todayStats.exercise.minutes,
               max: todayStats.goals.exerciseMinutes,
@@ -250,7 +231,6 @@ function DashboardContent() {
               onClick={() => router.push(`/exercise?date=${format(selectedDate, 'yyyy-MM-dd')}`)}
               className="w-full h-16 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold border border-border/50 shadow-sm"
             >
-              <Dumbbell className="w-5 h-5 mr-2" />
               {isToday ? "Start Workout" : "Log Training"}
             </Button>
           </motion.div>
@@ -264,7 +244,6 @@ function DashboardContent() {
               onClick={() => router.push(`/food?date=${format(selectedDate, 'yyyy-MM-dd')}`)}
               className="w-full h-16 rounded-2xl bg-secondary hover:bg-secondary/80 text-foreground font-semibold border border-border/50 shadow-sm"
             >
-              <Plus className="w-5 h-5 mr-2" />
               Log Food
             </Button>
           </motion.div>
@@ -311,20 +290,10 @@ function DashboardContent() {
                 className={cn(
                   "flex items-center justify-between p-4 rounded-2xl cursor-pointer",
                   "bg-card border border-border/50",
-                  "hover:border-white/20 transition-colors shadow-sm"
+                  "hover:border-white/20 transition-all shadow-sm"
                 )}
               >
               <div className="flex items-center gap-3">
-                {activity.type !== "food" && activity.type !== "hydration" && (
-                  <motion.div
-                    className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center bg-secondary",
-                      activity.highlight && "ring-1 ring-white/20"
-                    )}
-                  >
-                    {getActivityIcon(activity.type)}
-                  </motion.div>
-                )}
                 <div>
                   <p className={cn(
                     "font-bold capitalize text-zinc-200",

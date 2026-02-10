@@ -108,7 +108,7 @@ interface WidgetCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   progress?: {
     value: number;
     max: number;
@@ -182,14 +182,9 @@ export function WidgetCard({
               max={progress.max}
               size={56}
               strokeWidth={5}
-              icon={
-                <div className="text-primary" style={{ color }}>
-                  {icon}
-                </div>
-              }
               color={color}
             />
-          ) : (
+          ) : icon ? (
             <motion.div
               className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center"
               style={{ color }}
@@ -202,7 +197,7 @@ export function WidgetCard({
             >
               {icon}
             </motion.div>
-          )}
+          ) : null}
         </div>
       </div>
     </motion.div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Trophy } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -257,39 +256,16 @@ export function SetRow({
           size="sm"
           variant="outline"
           onClick={handleComplete}
-          className="h-8 px-3"
+          className="h-8 px-3 text-[10px] font-black uppercase tracking-widest"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
+          Done
         </Button>
       ) : (
         <div className="h-8 w-8 flex items-center justify-center">
           {isPR ? (
-            <Trophy className="w-4 h-4 text-white" />
+            <span className="text-[10px] font-black text-white uppercase tracking-tighter">PR</span>
           ) : (
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-zinc-500"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+            <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
           )}
         </div>
       )}
@@ -299,21 +275,9 @@ export function SetRow({
         <button
           type="button"
           onClick={onDelete}
-          className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+          className="h-8 w-8 flex items-center justify-center text-[10px] font-black text-muted-foreground hover:text-destructive transition-colors uppercase tracking-widest"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          ×
         </button>
       )}
     </div>
