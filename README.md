@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Life - Personal Health Tracker
 
-## Getting Started
+A personal health tracking portal built with Next.js, Convex, and Clerk. Track your nutrition, exercise, and hydration with a clean, elegant interface inspired by warm parchment aesthetics.
 
-First, run the development server:
+## Features
+
+- **Food Tracking**: Log meals with detailed nutrition (calories, protein, carbs, fat, fiber)
+- **Exercise Tracking**: Record workouts with sets, reps, weights, and muscle groups
+- **Hydration Tracking**: Monitor water and beverage intake with quick-add buttons
+- **Goals**: Set daily targets and track progress
+- **Favorites**: Save frequently used foods and exercises for quick access
+- **OpenClaw API**: Access your data via API for AI assistant integration
+
+## Tech Stack
+
+- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS 4
+- **Backend**: Convex (real-time database)
+- **Auth**: Clerk
+- **Styling**: shadcn/ui-style components with strummm theme
+
+## Setup
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Set up Clerk
+
+1. Create an account at [clerk.com](https://clerk.com)
+2. Create a new application
+3. Copy your API keys
+
+### 3. Set up Convex
+
+1. Run `npx convex dev` and follow the prompts to create a project
+2. This will create a `.env.local` file with your Convex URL
+
+### 4. Configure environment variables
+
+Create a `.env.local` file:
+
+```bash
+# Convex (auto-populated by npx convex dev)
+NEXT_PUBLIC_CONVEX_URL=your_convex_url
+
+# Clerk
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+
+# Clerk URLs
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+```
+
+### 5. Run development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This runs both Next.js and Convex dev servers in parallel.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API for OpenClaw
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create an API key in Settings, then access your data:
 
-## Learn More
+```
+GET /api/v1/data?key=YOUR_KEY&format=json
+GET /api/v1/data?key=YOUR_KEY&format=markdown&days=7
+```
 
-To learn more about Next.js, take a look at the following resources:
+The markdown format is perfect for feeding to AI assistants like OpenClaw.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Vercel + Convex
 
-## Deploy on Vercel
+1. Deploy Convex: `npx convex deploy`
+2. Push to GitHub
+3. Import to Vercel
+4. Add environment variables in Vercel dashboard
+5. Configure custom domain: `life.hejamadi.com`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+├── app/
+│   ├── (auth)/           # Sign-in, sign-up pages
+│   ├── (dashboard)/      # Main app pages
+│   │   ├── dashboard/    # Overview page
+│   │   ├── food/         # Food tracking
+│   │   ├── exercise/     # Exercise tracking
+│   │   ├── hydration/    # Hydration tracking
+│   │   └── settings/     # Goals & API keys
+│   └── api/v1/           # OpenClaw API
+├── components/
+│   ├── providers/        # Clerk + Convex providers
+│   └── ui/               # shadcn-style components
+└── lib/
+    └── utils.ts          # Utility functions
+
+convex/
+├── schema.ts             # Database schema
+├── foods.ts              # Food queries/mutations
+├── exercises.ts          # Exercise queries/mutations
+├── hydration.ts          # Hydration queries/mutations
+├── goals.ts              # Goals queries/mutations
+├── favorites.ts          # Favorites queries/mutations
+└── apiKeys.ts            # API key management
+```
