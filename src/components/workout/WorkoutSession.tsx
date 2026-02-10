@@ -52,6 +52,7 @@ interface WorkoutSessionProps {
   onCompleteWorkout: () => Promise<void>;
   onCancelWorkout: () => Promise<void>;
   onSaveAsTemplate?: () => void;
+  isLoadingExercises?: boolean;
   onSetExerciseSuperset?: (
     workoutExerciseId: string,
     supersetGroup: number | null
@@ -75,6 +76,7 @@ export function WorkoutSession({
   onCompleteWorkout,
   onCancelWorkout,
   onSaveAsTemplate,
+  isLoadingExercises,
   onSetExerciseSuperset,
   onViewExerciseHistory,
 }: WorkoutSessionProps) {
@@ -288,6 +290,7 @@ export function WorkoutSession({
         onOpenChange={setIsExercisePickerOpen}
         onSelect={handleSelectExercise}
         exercises={exercises}
+        isLoading={isLoadingExercises}
       />
 
       {/* Rest Timer */}

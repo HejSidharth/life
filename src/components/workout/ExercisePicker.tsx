@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { Search, XCircle, Dumbbell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ interface ExercisePickerProps {
   onSelect: (exercise: ExerciseLibraryItem) => void;
   exercises: ExerciseLibraryItem[];
   recentExercises?: ExerciseLibraryItem[];
+  isLoading?: boolean;
 }
 
 const MUSCLE_GROUPS = [
@@ -51,6 +53,7 @@ export function ExercisePicker({
   onSelect,
   exercises,
   recentExercises = [],
+  isLoading = false,
 }: ExercisePickerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMuscle, setSelectedMuscle] = useState("All");
@@ -123,122 +126,92 @@ export function ExercisePicker({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Add Exercise</DialogTitle>
+      <DialogContent className="max-w-xl max-h-[90vh] flex flex-col gap-8 p-8">
+        <DialogHeader className="p-0">
+          <DialogTitle className="text-3xl font-black tracking-tight leading-none">Add Exercise</DialogTitle>
         </DialogHeader>
 
-        {/* Search */}
-        <div className="relative">
-          <Input
-            ref={inputRef}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search exercises..."
-            className="pr-8"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+        <div className="flex flex-col gap-6">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-500" />
+            <Input
+              ref={inputRef}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search library..."
+              className="h-14 pl-12 pr-12 rounded-2xl bg-zinc-900 border-0 focus-visible:ring-1 focus-visible:ring-white/20 text-lg"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
               >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          )}
-        </div>
+                <XCircle className="w-6 h-6" />
+              </button>
+            )}
+          </div>
 
-        {/* Category Filter */}
-        <div className="flex gap-1 flex-wrap">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.value}
-              type="button"
-              onClick={() => setSelectedCategory(cat.value)}
-              className={cn(
-                "px-2 py-1 text-xs rounded-md border transition-colors",
-                selectedCategory === cat.value
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background border-border hover:bg-secondary"
-              )}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+          <div className="space-y-4">
+            {/* Category Filter */}
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.value)}
+                  className={cn(
+                    "px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl border transition-all whitespace-nowrap",
+                    selectedCategory === cat.value
+                      ? "bg-white text-black border-white"
+                      : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-700 hover:text-zinc-300"
+                  )}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
 
-        {/* Muscle Group Filter */}
-        <div className="flex gap-1 flex-wrap">
-          {MUSCLE_GROUPS.map((muscle) => (
-            <button
-              key={muscle}
-              type="button"
-              onClick={() => setSelectedMuscle(muscle)}
-              className={cn(
-                "px-2 py-1 text-xs rounded-md border transition-colors",
-                selectedMuscle === muscle
-                  ? "bg-secondary text-secondary-foreground border-secondary"
-                  : "bg-background border-border hover:bg-muted"
-              )}
-            >
-              {muscle}
-            </button>
-          ))}
+            {/* Muscle Group Filter */}
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+              {MUSCLE_GROUPS.map((muscle) => (
+                <button
+                  key={muscle}
+                  type="button"
+                  onClick={() => setSelectedMuscle(muscle)}
+                  className={cn(
+                    "px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl border transition-all whitespace-nowrap",
+                    selectedMuscle === muscle
+                      ? "bg-zinc-200 text-black border-zinc-200"
+                      : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-700 hover:text-zinc-300"
+                  )}
+                >
+                  {muscle}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Exercise List */}
-        <div className="flex-1 overflow-y-auto min-h-0 -mx-6 px-6">
-          {/* Recent Exercises */}
-          {recentExercises.length > 0 && !searchQuery && selectedMuscle === "All" && selectedCategory === "all" && (
-            <div className="mb-4">
-              <h3 className="text-xs font-medium text-muted-foreground mb-2">
-                Recent
-              </h3>
-              <div className="space-y-1">
-                {recentExercises.slice(0, 5).map((exercise) => (
-                  <ExerciseListItem
-                    key={exercise._id}
-                    exercise={exercise}
-                    onSelect={handleSelect}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* All Exercises */}
-          {filteredExercises.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No exercises found</p>
-              {searchQuery && (
-                <Button
-                  variant="link"
-                  onClick={() => setSearchQuery("")}
-                  className="mt-2"
-                >
-                  Clear search
-                </Button>
-              )}
+        <div className="flex-1 overflow-y-auto min-h-0 -mx-4 px-4 space-y-8">
+          {isLoading ? (
+            <div className="flex flex-col gap-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-20 rounded-2xl bg-zinc-900/50 animate-pulse" />
+              ))}
             </div>
           ) : (
-            <div className="space-y-4">
-              {sortedLetters.map((letter) => (
-                <div key={letter}>
-                  <h3 className="text-xs font-medium text-muted-foreground mb-1 sticky top-0 bg-background py-1">
-                    {letter}
+            <>
+              {/* Recent Exercises */}
+              {recentExercises.length > 0 && !searchQuery && selectedMuscle === "All" && selectedCategory === "all" && (
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-700 px-2">
+                    Recently Used
                   </h3>
-                  <div className="space-y-1">
-                    {groupedExercises[letter].map((exercise) => (
+                  <div className="space-y-2">
+                    {recentExercises.slice(0, 5).map((exercise) => (
                       <ExerciseListItem
                         key={exercise._id}
                         exercise={exercise}
@@ -247,8 +220,46 @@ export function ExercisePicker({
                     ))}
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+
+              {/* All Exercises */}
+              {filteredExercises.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-zinc-900 flex items-center justify-center mb-6">
+                    <Dumbbell className="w-8 h-8 text-zinc-700" />
+                  </div>
+                  <p className="text-zinc-500 font-bold uppercase text-xs tracking-widest">No matching exercises</p>
+                  {searchQuery && (
+                    <Button
+                      variant="link"
+                      onClick={() => setSearchQuery("")}
+                      className="mt-2 text-zinc-600 font-black uppercase text-[10px] tracking-[0.2em] hover:text-white transition-colors"
+                    >
+                      Clear search
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {sortedLetters.map((letter) => (
+                    <div key={letter} className="space-y-3">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-700 px-2 sticky top-0 bg-black/95 backdrop-blur-sm py-2 z-10">
+                        {letter}
+                      </h3>
+                      <div className="space-y-2">
+                        {groupedExercises[letter].map((exercise) => (
+                          <ExerciseListItem
+                            key={exercise._id}
+                            exercise={exercise}
+                            onSelect={handleSelect}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </DialogContent>
@@ -267,14 +278,14 @@ function ExerciseListItem({
     <button
       type="button"
       onClick={() => onSelect(exercise)}
-      className="w-full text-left px-3 py-2 rounded-md hover:bg-muted transition-colors"
+      className="w-full text-left px-5 py-4 rounded-3xl bg-zinc-900/40 border border-zinc-900 hover:border-white/10 hover:bg-zinc-900 transition-all group"
     >
-      <div className="font-medium text-sm">{exercise.name}</div>
-      <div className="text-xs text-muted-foreground flex items-center gap-2">
+      <div className="font-bold text-lg text-zinc-100 group-hover:text-white transition-colors leading-tight">{exercise.name}</div>
+      <div className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-600 mt-2 flex items-center gap-2">
         <span>{exercise.muscleGroups.join(", ")}</span>
         {exercise.equipment && (
           <>
-            <span>·</span>
+            <span className="w-1 h-1 rounded-full bg-zinc-800" />
             <span>{exercise.equipment}</span>
           </>
         )}

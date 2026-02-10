@@ -83,7 +83,9 @@ function ExerciseContent() {
     userId ? { userId, limit: 10 } : "skip"
   );
 
-  const exerciseLibrary = useQuery(api.exerciseLibrary.getExercises, {}) || [];
+  const exerciseLibraryRaw = useQuery(api.exerciseLibrary.getExercises, {});
+  const exerciseLibrary = exerciseLibraryRaw || [];
+  const isLoadingLibrary = exerciseLibraryRaw === undefined;
 
   // Convex Mutations
   const startWorkout = useMutation(api.workouts.startWorkout);
@@ -130,6 +132,7 @@ function ExerciseContent() {
         <WorkoutSession
           workout={activeWorkout}
           exercises={exerciseLibrary as ExerciseLibraryItem[]}
+          isLoadingExercises={isLoadingLibrary}
           onAddExercise={(libId) => 
             addExercise({ 
               workoutId: activeWorkout._id as Id<"workouts">, 
