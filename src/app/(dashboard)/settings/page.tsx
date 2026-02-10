@@ -17,7 +17,7 @@ import {
   ExternalLink
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "convex/_generated/api";
 import { useUser, UserButton, SignedIn } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { generateApiKey, hashApiKey } from "@/lib/utils";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import type { Id } from "convex/_generated/dataModel";
 
 type GoalType = "calories" | "protein" | "carbs" | "fat" | "water" | "exercise_minutes";
 

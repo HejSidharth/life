@@ -18,7 +18,7 @@ import { ContributionHeatmap } from "@/components/widgets/ContributionHeatmap";
 import { CalendarStrip } from "@/components/navigation/CalendarStrip";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useActiveDate } from "@/hooks/use-active-date";
 import { cn } from "@/lib/utils";

@@ -18,7 +18,7 @@ import {
   Timer
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useActiveDate } from "@/hooks/use-active-date";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ import { Input } from "@/components/ui/input";
 import { WorkoutSession } from "@/components/workout/WorkoutSession";
 import { ExerciseLibraryItem, Workout, WorkoutTemplate } from "@/types/workout";
 import { format } from "date-fns";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import type { Id } from "convex/_generated/dataModel";
 
 const springTransition = {
   type: "spring" as const,

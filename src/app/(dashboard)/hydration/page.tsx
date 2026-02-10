@@ -8,7 +8,7 @@ import {
   Trash2
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useActiveDate } from "@/hooks/use-active-date";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Suspense } from "react";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import type { Id } from "convex/_generated/dataModel";
 
 type BeverageType = "water" | "coffee" | "tea" | "juice" | "other";
 
