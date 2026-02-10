@@ -157,7 +157,18 @@ Copy `.env.example` to `.env.local` and add your keys:
 - `CLERK_SECRET_KEY`
 - `CONVEX_DEPLOYMENT`
 
-Run `npx convex dev` to initialize Convex types.
+## Deployment Guidelines
+
+### Convex Backend
+Deploy the backend first:
+```bash
+npx convex deploy
+```
+
+### Netlify Frontend
+1. Add `CONVEX_DEPLOY_KEY` to Netlify environment variables (from Convex Dashboard > Settings).
+2. Ensure `NEXT_PUBLIC_CONVEX_URL` is set to the production URL.
+3. The build command `npx convex codegen && next build` will automatically handle type generation.
 
 ## Design Principles
 - **No gradients** - flat, warm cream/parchment aesthetic
