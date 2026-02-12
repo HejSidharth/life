@@ -214,6 +214,16 @@ export function ExerciseCard({
             + Add Set
           </Button>
 
+          {/* Finish Exercise — collapses the card */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleExpand}
+            className="w-full mt-1 h-10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-700 hover:text-zinc-400"
+          >
+            Finish Exercise
+          </Button>
+
           {/* Stats */}
           {completedSets.length > 0 && (
             <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
