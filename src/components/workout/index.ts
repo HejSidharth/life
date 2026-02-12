@@ -4,3 +4,4 @@ export { RestTimer, useRestTimer } from "./RestTimer";
 export { ExerciseCard } from "./ExerciseCard";
 export { WorkoutSession } from "./WorkoutSession";
 export { ExerciseHistoryDialog } from "./ExerciseHistoryDialog";
+export { WorkoutDetailDialog } from "./WorkoutDetailDialog";

@@ -22,6 +22,12 @@ import {
   calculateVolume,
 } from "@/types/workout";
 
+interface PreviousPerformances {
+  [exerciseLibraryId: string]: {
+    sets: { weight?: number; reps?: number }[];
+  };
+}
+
 interface WorkoutSessionProps {
   workout: Workout;
   exercises: ExerciseLibraryItem[];
@@ -43,6 +49,7 @@ interface WorkoutSessionProps {
   onCancelWorkout: () => Promise<void>;
   onSaveAsTemplate?: () => void;
   isLoadingExercises?: boolean;
+  previousPerformances?: PreviousPerformances;
   onViewExerciseHistory?: (
     exerciseLibraryId: string,
     exerciseName: string
@@ -64,6 +71,7 @@ export function WorkoutSession({
   onCancelWorkout,
   onSaveAsTemplate,
   isLoadingExercises,
+  previousPerformances,
   onViewExerciseHistory,
   onViewExerciseTechnique,
 }: WorkoutSessionProps) {
@@ -217,6 +225,7 @@ export function WorkoutSession({
             onDeleteSet={onDeleteSet}
             onRemoveExercise={() => onRemoveExercise(exercise._id)}
             onStartRest={startRest}
+            previousPerformance={previousPerformances?.[exercise.exerciseLibraryId]}
             onViewHistory={
               onViewExerciseHistory
                 ? () =>

@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { SetType, SET_TYPE_LABELS, SET_TYPE_COLORS } from "@/types/workout";
+import { SetType, SET_TYPE_LABELS } from "@/types/workout";
 
 interface SetRowProps {
   setNumber: number;
@@ -42,20 +41,7 @@ interface SetRowProps {
 }
 
 const SET_TYPES: SetType[] = ["warmup", "working", "drop", "failure", "rest_pause", "backoff"];
-const RPE_OPTIONS = [
-  "",
-  "5",
-  "5.5",
-  "6",
-  "6.5",
-  "7",
-  "7.5",
-  "8",
-  "8.5",
-  "9",
-  "9.5",
-  "10",
-];
+const RPE_OPTIONS = ["6", "6.5", "7", "7.5", "8", "8.5", "9", "9.5", "10"];
 
 export function SetRow({
   setNumber,
@@ -76,27 +62,29 @@ export function SetRow({
   onStartRest,
   showRpe = true,
   showRir = false,
-  showSetType = true,
 }: SetRowProps) {
   const [localWeight, setLocalWeight] = useState(weight?.toString() || "");
   const [localReps, setLocalReps] = useState(reps?.toString() || "");
   const [localRpe, setLocalRpe] = useState(rpe?.toString() || "");
   const [localRir, setLocalRir] = useState(rir?.toString() || "");
-  const [isEditingCompleted, setIsEditingCompleted] = useState(false);
-  const [showTypeMenu, setShowTypeMenu] = useState(false);
-  const typeMenuRef = useRef<HTMLDivElement>(null);
-  const isEditable = !isCompleted || isEditingCompleted;
+  const [isEditing, setIsEditing] = useState(false);
+  const [showTypeSelector, setShowTypeSelector] = useState(false);
 
-  // Close menu on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (typeMenuRef.current && !typeMenuRef.current.contains(event.target as Node)) {
-        setShowTypeMenu(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const isEditMode = isCompleted && isEditing;
+
+  const weightStep = weightUnit === "kg" ? 2.5 : 5;
+
+  const adjustWeight = (delta: number) => {
+    const current = localWeight ? parseFloat(localWeight) : 0;
+    const next = Math.max(0, current + delta);
+    setLocalWeight(next.toString());
+  };
+
+  const adjustReps = (delta: number) => {
+    const current = localReps ? parseInt(localReps) : 0;
+    const next = Math.max(0, current + delta);
+    setLocalReps(next.toString());
+  };
 
   const handleComplete = () => {
     const data = {
@@ -111,9 +99,8 @@ export function SetRow({
     }
   };
 
-  const handleBlur = () => {
+  const handleSaveEdits = () => {
     const updates: Partial<{ weight: number; reps: number; rpe: number; rir: number }> = {};
-    
     if (localWeight && parseFloat(localWeight) !== weight) {
       updates.weight = parseFloat(localWeight);
     }
@@ -126,15 +113,10 @@ export function SetRow({
     if (localRir && parseInt(localRir) !== rir) {
       updates.rir = parseInt(localRir);
     }
-
     if (Object.keys(updates).length > 0) {
       onUpdate(updates);
     }
-  };
-
-  const handleSaveEdits = () => {
-    handleBlur();
-    setIsEditingCompleted(false);
+    setIsEditing(false);
   };
 
   const handleCancelEdits = () => {
@@ -142,191 +124,271 @@ export function SetRow({
     setLocalReps(reps?.toString() || "");
     setLocalRpe(rpe?.toString() || "");
     setLocalRir(rir?.toString() || "");
-    setIsEditingCompleted(false);
+    setIsEditing(false);
   };
 
-  return (
-    <div
-      className={cn(
-        "grid gap-2 items-center py-2 px-3 rounded-md transition-colors",
-        isCompleted
-          ? "bg-muted/50"
-          : "bg-background hover:bg-muted/30"
-      )}
-      style={{
-        gridTemplateColumns: showSetType
-          ? "auto 1fr 80px 60px 60px auto auto"
-          : "auto 1fr 80px 60px auto auto",
-      }}
-    >
-      {/* Set Number & Type */}
-      <div className="relative" ref={typeMenuRef}>
-        <button
-          type="button"
-          className={cn(
-            "w-8 h-8 rounded-md text-xs font-medium flex items-center justify-center transition-colors",
-            SET_TYPE_COLORS[setType],
-            isEditable && "cursor-pointer hover:opacity-80"
-          )}
-          onClick={() => isEditable && setShowTypeMenu(!showTypeMenu)}
-          disabled={!isEditable}
-        >
+  // -- Completed set: compact summary line --
+  if (isCompleted && !isEditing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsEditing(true)}
+        className="w-full flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-zinc-900/50 transition-colors text-left group"
+      >
+        <span className="w-6 h-6 rounded-full bg-zinc-800 text-[10px] font-bold flex items-center justify-center text-zinc-400 shrink-0">
           {setNumber}
-        </button>
-        
-        {showTypeMenu && (
-          <div className="absolute left-0 top-full mt-1 z-50 bg-popover border border-border rounded-md shadow-lg py-1 min-w-[120px]">
-            {SET_TYPES.map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => {
-                  onUpdate({ setType: type });
-                  setShowTypeMenu(false);
-                }}
-                className={cn(
-                  "w-full px-3 py-1.5 text-left text-sm hover:bg-muted transition-colors",
-                  setType === type && "bg-muted"
-                )}
-              >
-                {SET_TYPE_LABELS[type]}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+        </span>
 
-      {/* Set Type Label (if showing) */}
-      {showSetType && (
-        <span className="text-xs text-muted-foreground truncate">
-          {SET_TYPE_LABELS[setType]}
-          {previousWeight && previousReps && (
-            <span className="ml-2 opacity-60">
-              (prev: {previousWeight}×{previousReps})
+        <span className="flex-1 text-sm font-medium text-zinc-200 min-w-0">
+          {weight != null && (
+            <span>{weight} {weightUnit}</span>
+          )}
+          {weight != null && reps != null && (
+            <span className="text-zinc-600 mx-1.5">&times;</span>
+          )}
+          {reps != null && (
+            <span>{reps}</span>
+          )}
+          {rpe != null && (
+            <span className="text-zinc-500 ml-2 text-xs">@{rpe}</span>
+          )}
+          {setType !== "working" && (
+            <span className="text-zinc-600 ml-2 text-[10px] uppercase tracking-wider">
+              {SET_TYPE_LABELS[setType]}
             </span>
           )}
         </span>
-      )}
 
-      {/* Weight */}
-      <div className="relative">
-        <Input
-          type="number"
-          value={localWeight}
-          onChange={(e) => setLocalWeight(e.target.value)}
-          onBlur={handleBlur}
-          placeholder="0"
-          className="h-8 text-center pr-8"
-          disabled={!isEditable}
-        />
-        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-          {weightUnit}
+        {isPR ? (
+          <span className="text-[10px] font-black text-white uppercase tracking-tight bg-zinc-800 px-2 py-0.5 rounded-md">
+            PR
+          </span>
+        ) : (
+          <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 shrink-0" />
+        )}
+
+        <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+          Edit
         </span>
+      </button>
+    );
+  }
+
+  // -- Active set or editing: focused input card --
+  return (
+    <div className="rounded-2xl bg-zinc-900/40 border border-zinc-800/60 p-5 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <span className="w-7 h-7 rounded-full bg-white text-black text-xs font-black flex items-center justify-center">
+            {setNumber}
+          </span>
+
+          {/* Set type — tappable to cycle */}
+          <button
+            type="button"
+            onClick={() => setShowTypeSelector(!showTypeSelector)}
+            className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            {SET_TYPE_LABELS[setType]}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {isEditMode && (
+            <button
+              type="button"
+              onClick={handleCancelEdits}
+              className="text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-zinc-300 transition-colors px-2 py-1"
+            >
+              Cancel
+            </button>
+          )}
+          {!isEditMode && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="text-zinc-700 hover:text-red-400 transition-colors p-1"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Reps */}
-      <Input
-        type="number"
-        value={localReps}
-        onChange={(e) => setLocalReps(e.target.value)}
-        onBlur={handleBlur}
-        placeholder="0"
-        className="h-8 text-center"
-        disabled={!isEditable}
-      />
-
-      {/* RPE (optional) */}
-      {showRpe && (
-        <Select
-          value={localRpe}
-          onChange={(e) => setLocalRpe(e.target.value)}
-          onBlur={handleBlur}
-          className="h-8 text-center text-xs px-1"
-          disabled={!isEditable}
-        >
-          <option value="">RPE</option>
-          {RPE_OPTIONS.filter((option) => option !== "").map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
+      {/* Set type selector pills */}
+      {showTypeSelector && (
+        <div className="flex gap-1.5 flex-wrap">
+          {SET_TYPES.map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => {
+                onUpdate({ setType: type });
+                setShowTypeSelector(false);
+              }}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
+                setType === type
+                  ? "bg-white text-black"
+                  : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              {SET_TYPE_LABELS[type]}
+            </button>
           ))}
-        </Select>
-      )}
-
-      {/* RIR (optional, alternative to RPE) */}
-      {showRir && !showRpe && (
-        <Input
-          type="number"
-          min="0"
-          max="5"
-          value={localRir}
-          onChange={(e) => setLocalRir(e.target.value)}
-          onBlur={handleBlur}
-          placeholder="RIR"
-          className="h-8 text-center text-xs"
-          disabled={!isEditable}
-        />
-      )}
-
-      {/* Complete Button */}
-      {!isCompleted ? (
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={handleComplete}
-          className="h-8 px-3 text-[10px] font-black uppercase tracking-widest"
-        >
-          Done
-        </Button>
-      ) : isEditingCompleted ? (
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={handleSaveEdits}
-          className="h-8 px-3 text-[10px] font-black uppercase tracking-widest"
-        >
-          Save
-        </Button>
-      ) : (
-        <div className="h-8 w-8 flex items-center justify-center">
-          {isPR ? (
-            <span className="text-[10px] font-black text-white uppercase tracking-tighter">PR</span>
-          ) : (
-            <div className="w-1.5 h-1.5 rounded-full bg-zinc-700" />
-          )}
         </div>
       )}
 
-      {/* Delete Button */}
-      {!isCompleted ? (
-        <button
-          type="button"
-          onClick={onDelete}
-          className="h-8 w-8 flex items-center justify-center text-[10px] font-black text-muted-foreground hover:text-destructive transition-colors uppercase tracking-widest"
-        >
-          ×
-        </button>
-      ) : isEditingCompleted ? (
+      {/* Weight input */}
+      <div className="space-y-2">
+        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 block">
+          Weight
+        </label>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => adjustWeight(-weightStep)}
+            className="w-11 h-11 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+          >
+            &minus;
+          </button>
+          <div className="flex-1 relative">
+            <Input
+              type="number"
+              inputMode="decimal"
+              value={localWeight}
+              onChange={(e) => setLocalWeight(e.target.value)}
+              placeholder={previousWeight?.toString() || "0"}
+              className="h-12 text-center text-lg font-bold bg-zinc-800/50 border-zinc-700/50 rounded-xl pr-12 focus-visible:ring-1 focus-visible:ring-white/20"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-600 uppercase">
+              {weightUnit}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => adjustWeight(weightStep)}
+            className="w-11 h-11 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+          >
+            +
+          </button>
+        </div>
+        {previousWeight != null && (
+          <p className="text-[10px] text-zinc-600 text-center">
+            prev: {previousWeight} {weightUnit}
+          </p>
+        )}
+      </div>
+
+      {/* Reps input */}
+      <div className="space-y-2">
+        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 block">
+          Reps
+        </label>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => adjustReps(-1)}
+            className="w-11 h-11 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+          >
+            &minus;
+          </button>
+          <div className="flex-1">
+            <Input
+              type="number"
+              inputMode="numeric"
+              value={localReps}
+              onChange={(e) => setLocalReps(e.target.value)}
+              placeholder={previousReps?.toString() || "0"}
+              className="h-12 text-center text-lg font-bold bg-zinc-800/50 border-zinc-700/50 rounded-xl focus-visible:ring-1 focus-visible:ring-white/20"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => adjustReps(1)}
+            className="w-11 h-11 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+          >
+            +
+          </button>
+        </div>
+        {previousReps != null && (
+          <p className="text-[10px] text-zinc-600 text-center">
+            prev: {previousReps} reps
+          </p>
+        )}
+      </div>
+
+      {/* RPE pills */}
+      {showRpe && (
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 block">
+            RPE <span className="font-medium normal-case tracking-normal text-zinc-700">optional</span>
+          </label>
+          <div className="flex gap-1.5 flex-wrap">
+            {RPE_OPTIONS.map((val) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setLocalRpe(localRpe === val ? "" : val)}
+                className={cn(
+                  "px-3 py-2 rounded-xl text-sm font-bold transition-all active:scale-95",
+                  localRpe === val
+                    ? "bg-white text-black"
+                    : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                )}
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* RIR input (alternative to RPE) */}
+      {showRir && !showRpe && (
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 block">
+            RIR <span className="font-medium normal-case tracking-normal text-zinc-700">reps in reserve</span>
+          </label>
+          <div className="flex gap-1.5">
+            {["0", "1", "2", "3", "4", "5"].map((val) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setLocalRir(localRir === val ? "" : val)}
+                className={cn(
+                  "px-3 py-2 rounded-xl text-sm font-bold transition-all flex-1 active:scale-95",
+                  localRir === val
+                    ? "bg-white text-black"
+                    : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                )}
+              >
+                {val}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Action button */}
+      {isEditMode ? (
         <Button
           type="button"
-          size="sm"
-          variant="ghost"
-          onClick={handleCancelEdits}
-          className="h-8 px-2 text-[10px] font-black uppercase tracking-widest"
+          onClick={handleSaveEdits}
+          className="w-full h-12 rounded-xl text-[11px] font-black uppercase tracking-[0.2em]"
         >
-          Cancel
+          Save Changes
         </Button>
       ) : (
         <Button
           type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => setIsEditingCompleted(true)}
-          className="h-8 px-2 text-[10px] font-black uppercase tracking-widest"
+          onClick={handleComplete}
+          className="w-full h-12 rounded-xl text-[11px] font-black uppercase tracking-[0.2em]"
         >
-          Edit
+          Done
         </Button>
       )}
     </div>

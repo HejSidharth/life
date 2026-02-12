@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { WorkoutSession } from "@/components/workout/WorkoutSession";
+import { ExerciseHistoryDialog } from "@/components/workout/ExerciseHistoryDialog";
+import { WorkoutDetailDialog } from "@/components/workout/WorkoutDetailDialog";
 import { ExerciseLibraryItem, Workout } from "@/types/workout";
 import { format } from "date-fns";
 import type { Id } from "convex/_generated/dataModel";
@@ -96,6 +98,9 @@ function ExerciseContent() {
 
   const { selectedDate, isToday, getLogTimestamp } = useActiveDate();
 
+  // Feature D: Full history toggle (must be before query that uses it)
+  const [showFullHistory, setShowFullHistory] = useState(false);
+
   // Convex Queries
   const activeWorkoutRaw = useQuery(
     api.workouts.getActiveWorkout,
@@ -109,7 +114,7 @@ function ExerciseContent() {
   
   const recentWorkoutsRaw = useQuery(
     api.workouts.getRecentWorkouts,
-    userId ? { userId, limit: 10 } : "skip"
+    userId ? { userId, limit: showFullHistory ? 50 : 10 } : "skip"
   );
 
   const todayPlanSummary = useQuery(
@@ -131,6 +136,45 @@ function ExerciseContent() {
   const exerciseLibraryRaw = useQuery(api.exerciseLibrary.getExercises, {});
   const exerciseLibrary = exerciseLibraryRaw || [];
   const isLoadingLibrary = exerciseLibraryRaw === undefined;
+
+  // Feature A: Fetch previous performances for exercises in active workout
+  const exerciseLibraryIds = activeWorkoutRaw
+    ? (activeWorkoutRaw as Workout).exercises.map(
+        (e) => e.exerciseLibraryId as Id<"exerciseLibrary">
+      )
+    : [];
+  const previousPerformancesRaw = useQuery(
+    api.workouts.getLastPerformances,
+    userId && activeWorkoutRaw && exerciseLibraryIds.length > 0
+      ? {
+          userId,
+          exerciseLibraryIds,
+          excludeWorkoutId: (activeWorkoutRaw as Workout)._id as Id<"workouts">,
+        }
+      : "skip"
+  );
+
+  // Feature B: Exercise history for the dialog
+  const [historyExerciseId, setHistoryExerciseId] = useState<string | null>(null);
+  const [historyExerciseName, setHistoryExerciseName] = useState("");
+  const exerciseHistoryRaw = useQuery(
+    api.workouts.getExerciseHistory,
+    userId && historyExerciseId
+      ? {
+          userId,
+          exerciseLibraryId: historyExerciseId as Id<"exerciseLibrary">,
+        }
+      : "skip"
+  );
+
+  // Feature C: Workout detail dialog
+  const [detailWorkoutId, setDetailWorkoutId] = useState<string | null>(null);
+  const workoutDetailRaw = useQuery(
+    api.workouts.getWorkoutDetails,
+    detailWorkoutId
+      ? { workoutId: detailWorkoutId as Id<"workouts"> }
+      : "skip"
+  );
 
   // Convex Mutations
   const startWorkout = useMutation(api.workouts.startWorkout);
@@ -249,8 +293,9 @@ function ExerciseContent() {
 
   if (activeWorkout) {
     return (
-      <div className="max-w-lg mx-auto">
-        <WorkoutSession
+      <>
+        <div className="max-w-lg mx-auto">
+          <WorkoutSession
           workout={activeWorkout}
           exercises={exerciseLibrary as ExerciseLibraryItem[]}
           isLoadingExercises={isLoadingLibrary}
@@ -325,8 +370,24 @@ function ExerciseContent() {
           onViewExerciseTechnique={(url) => {
             window.open(url, "_blank", "noopener,noreferrer");
           }}
+          previousPerformances={previousPerformancesRaw as Record<string, { sets: { weight?: number; reps?: number }[] }> | undefined}
+          onViewExerciseHistory={(exerciseLibraryId, exerciseName) => {
+            setHistoryExerciseId(exerciseLibraryId);
+            setHistoryExerciseName(exerciseName);
+          }}
         />
-      </div>
+        </div>
+
+        {/* Exercise History Dialog (Feature B) */}
+        <ExerciseHistoryDialog
+          open={historyExerciseId !== null}
+          onOpenChange={(open) => {
+            if (!open) setHistoryExerciseId(null);
+          }}
+          exerciseName={historyExerciseName}
+          history={exerciseHistoryRaw ?? undefined}
+        />
+      </>
     );
   }
 
@@ -508,8 +569,9 @@ function ExerciseContent() {
             className="text-sm text-muted-foreground flex items-center hover:text-foreground transition-colors"
             whileHover={{ x: 4 }}
             transition={springTransition}
+            onClick={() => setShowFullHistory(!showFullHistory)}
           >
-            Full History
+            {showFullHistory ? "Show Less" : "Full History"}
           </motion.button>
         </div>
 
@@ -525,7 +587,10 @@ function ExerciseContent() {
                 whileTap={{ scale: 0.98 }}
                 transition={springTransition}
               >
-                <Card className="border-border/40 bg-zinc-950/50">
+                <Card
+                  className="border-border/40 bg-zinc-950/50 cursor-pointer hover:border-white/10 transition-colors"
+                  onClick={() => setDetailWorkoutId(workout._id)}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -559,6 +624,16 @@ function ExerciseContent() {
           )}
         </div>
       </motion.div>
+
+      {/* Workout Detail Dialog (Feature C) */}
+      <WorkoutDetailDialog
+        open={detailWorkoutId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDetailWorkoutId(null);
+        }}
+        workout={workoutDetailRaw as Parameters<typeof WorkoutDetailDialog>[0]["workout"]}
+        isLoading={detailWorkoutId !== null && workoutDetailRaw === undefined}
+      />
 
       {/* Start Dialog */}
       <Dialog open={showStartDialog} onOpenChange={setShowStartDialog}>

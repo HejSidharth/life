@@ -737,6 +737,52 @@ export const getExerciseHistory = query({
   },
 });
 
+// Get last performances for a batch of exercises (for "prev" hints in active workout)
+export const getLastPerformances = query({
+  args: {
+    userId: v.string(),
+    exerciseLibraryIds: v.array(v.id("exerciseLibrary")),
+    excludeWorkoutId: v.optional(v.id("workouts")),
+  },
+  handler: async (ctx, args) => {
+    const result: Record<string, { sets: { weight?: number; reps?: number }[] }> = {};
+    const excludeId = args.excludeWorkoutId?.toString();
+
+    for (const exerciseId of args.exerciseLibraryIds) {
+      const sets = await ctx.db
+        .query("exerciseSets")
+        .withIndex("by_user_exercise", (q) =>
+          q.eq("userId", args.userId).eq("exerciseLibraryId", exerciseId)
+        )
+        .order("desc")
+        .filter((q) => q.eq(q.field("isCompleted"), true))
+        .take(50);
+
+      // Filter out sets from the current active workout
+      const filteredSets = excludeId
+        ? sets.filter((s) => s.workoutId.toString() !== excludeId)
+        : sets;
+
+      if (filteredSets.length === 0) continue;
+
+      // Take the most recent workout's sets
+      const firstWorkoutId = filteredSets[0].workoutId.toString();
+      const workoutSets = filteredSets
+        .filter((s) => s.workoutId.toString() === firstWorkoutId)
+        .sort((a, b) => a.setNumber - b.setNumber);
+
+      result[exerciseId] = {
+        sets: workoutSets.map((s) => ({
+          weight: s.weight,
+          reps: s.reps,
+        })),
+      };
+    }
+
+    return result;
+  },
+});
+
 // Get personal records for a user
 export const getPersonalRecords = query({
   args: {

@@ -3,14 +3,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { SetRow } from "./SetRow";
 import { WorkoutExercise, WorkoutSet, calculateVolume } from "@/types/workout";
 
@@ -54,10 +46,7 @@ export function ExerciseCard({
   defaultRestSeconds = 90,
 }: ExerciseCardProps) {
   const [isRemoving, setIsRemoving] = useState(false);
-  const [showAddSetDialog, setShowAddSetDialog] = useState(false);
-  const [newSetWeight, setNewSetWeight] = useState("");
-  const [newSetReps, setNewSetReps] = useState("");
-  const [newSetRpe, setNewSetRpe] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
 
   const completedSets = exercise.sets.filter((s) => s.isCompleted);
   const totalVolume = calculateVolume(exercise.sets);
@@ -74,28 +63,6 @@ export function ExerciseCard({
     } else {
       onRemoveExercise();
     }
-  };
-
-  const handleCreateSet = async (completeImmediately: boolean) => {
-    if (!completeImmediately) {
-      await onAddSet();
-      setShowAddSetDialog(false);
-      setNewSetWeight("");
-      setNewSetReps("");
-      setNewSetRpe("");
-      return;
-    }
-
-    await onAddSet({
-      weight: newSetWeight ? parseFloat(newSetWeight) : undefined,
-      reps: newSetReps ? parseInt(newSetReps, 10) : undefined,
-      rpe: newSetRpe ? parseFloat(newSetRpe) : undefined,
-    });
-
-    setShowAddSetDialog(false);
-    setNewSetWeight("");
-    setNewSetReps("");
-    setNewSetRpe("");
   };
 
   return (
@@ -121,7 +88,6 @@ export function ExerciseCard({
               {!isExpanded && (
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {completedSets.length}/{exercise.sets.length} sets
-                  {exercise.difficultyTier && ` · ${exercise.difficultyTier}`}
                   {totalVolume > 0 && ` · ${totalVolume.toLocaleString()} vol`}
                   {prSets.length > 0 && (
                     <span className="text-white ml-1 font-bold">
@@ -133,182 +99,121 @@ export function ExerciseCard({
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
-            {onViewHistory && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onViewHistory}
-                className="h-8 px-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white"
-                title="View history"
-              >
-                History
-              </Button>
-            )}
-            {exercise.techniqueUrl && onViewTechnique && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onViewTechnique(exercise.techniqueUrl as string)}
-                className="h-8 px-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white"
-                title="View technique"
-              >
-                Technique
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRemove}
-              className="h-8 px-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-destructive"
-              title="Remove exercise"
+          {/* Overflow menu */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowMenu(!showMenu)}
+              className="h-8 w-8 flex items-center justify-center text-zinc-600 hover:text-zinc-300 transition-colors rounded-lg hover:bg-zinc-800/50"
             >
-              Remove
-            </Button>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <circle cx="8" cy="3" r="1.25" />
+                <circle cx="8" cy="8" r="1.25" />
+                <circle cx="8" cy="13" r="1.25" />
+              </svg>
+            </button>
+
+            {showMenu && (
+              <>
+                {/* Backdrop to close menu */}
+                <button
+                  type="button"
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowMenu(false)}
+                  aria-label="Close menu"
+                />
+                <div className="absolute right-0 top-full mt-1 z-50 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl py-1 min-w-[140px]">
+                  {onViewHistory && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onViewHistory();
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors"
+                    >
+                      History
+                    </button>
+                  )}
+                  {exercise.techniqueUrl && onViewTechnique && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onViewTechnique(exercise.techniqueUrl as string);
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors"
+                    >
+                      Technique
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleRemove();
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-red-400 hover:text-red-300 hover:bg-zinc-800/50 transition-colors"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="pt-0">
-          {/* Column Headers */}
-          <div
-            className="grid gap-2 items-center px-3 py-1 text-xs text-muted-foreground"
-            style={{ gridTemplateColumns: "auto 1fr 80px 60px 60px auto auto" }}
-          >
-            <div className="w-8 text-center">Set</div>
-            <div>Type</div>
-            <div className="text-center">Weight</div>
-            <div className="text-center">Reps</div>
-            <div className="text-center">RPE</div>
-            <div className="w-8"></div>
-            <div className="w-8"></div>
-          </div>
+        <CardContent className="pt-0 space-y-1">
+          {/* Sets — no column header grid needed */}
+          {exercise.sets.map((set, index) => (
+            <SetRow
+              key={set._id}
+              setNumber={set.setNumber}
+              setType={set.setType}
+              weight={set.weight}
+              reps={set.reps}
+              rpe={set.rpe}
+              rir={set.rir}
+              restSeconds={exercise.restSeconds || defaultRestSeconds}
+              weightUnit={set.weightUnit}
+              isCompleted={set.isCompleted}
+              isPR={set.isPR}
+              previousWeight={previousPerformance?.sets[index]?.weight}
+              previousReps={previousPerformance?.sets[index]?.reps}
+              onComplete={(data) => handleCompleteSet(set._id, data)}
+              onUpdate={(data) => onUpdateSet(set._id, data as Partial<WorkoutSet>)}
+              onDelete={() => onDeleteSet(set._id)}
+              onStartRest={onStartRest}
+              showRpe={true}
+              showSetType={true}
+            />
+          ))}
 
-          {/* Sets */}
-          <div className="space-y-1">
-            {exercise.sets.map((set, index) => (
-              <SetRow
-                key={set._id}
-                setNumber={set.setNumber}
-                setType={set.setType}
-                weight={set.weight}
-                reps={set.reps}
-                rpe={set.rpe}
-                rir={set.rir}
-                restSeconds={exercise.restSeconds || defaultRestSeconds}
-                weightUnit={set.weightUnit}
-                isCompleted={set.isCompleted}
-                isPR={set.isPR}
-                previousWeight={previousPerformance?.sets[index]?.weight}
-                previousReps={previousPerformance?.sets[index]?.reps}
-                onComplete={(data) => handleCompleteSet(set._id, data)}
-                onUpdate={(data) => onUpdateSet(set._id, data as Partial<WorkoutSet>)}
-                onDelete={() => onDeleteSet(set._id)}
-                onStartRest={onStartRest}
-                showRpe={true}
-                showSetType={true}
-              />
-            ))}
-          </div>
-
-          {/* Add Set Button */}
+          {/* Add Set — inline, no dialog */}
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowAddSetDialog(true)}
+            onClick={() => void onAddSet()}
             className="w-full mt-3 h-10 rounded-2xl border-zinc-800 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white"
           >
-            Add Set
+            + Add Set
           </Button>
 
           {/* Stats */}
           {completedSets.length > 0 && (
             <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
-              <span>{completedSets.length} sets completed</span>
-              {totalVolume > 0 && <span>{totalVolume.toLocaleString()} total volume</span>}
+              <span>{completedSets.length} sets done</span>
+              {totalVolume > 0 && <span>{totalVolume.toLocaleString()} vol</span>}
             </div>
           )}
         </CardContent>
       )}
 
-      <Dialog open={showAddSetDialog} onOpenChange={setShowAddSetDialog}>
-        <DialogContent className="rounded-3xl border-border bg-card shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Add Set</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
-                  Weight
-                </label>
-                <Input
-                  type="number"
-                  placeholder={`0 ${exercise.sets[0]?.weightUnit ?? "lbs"}`}
-                  value={newSetWeight}
-                  onChange={(event) => setNewSetWeight(event.target.value)}
-                  className="h-11 rounded-xl"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
-                  Reps
-                </label>
-                <Input
-                  type="number"
-                  placeholder="0"
-                  value={newSetReps}
-                  onChange={(event) => setNewSetReps(event.target.value)}
-                  className="h-11 rounded-xl"
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
-                RPE
-              </label>
-              <Select
-                value={newSetRpe}
-                onChange={(event) => setNewSetRpe(event.target.value)}
-                className="h-11 rounded-xl"
-              >
-                <option value="">Select RPE</option>
-                <option value="5">5</option>
-                <option value="5.5">5.5</option>
-                <option value="6">6</option>
-                <option value="6.5">6.5</option>
-                <option value="7">7</option>
-                <option value="7.5">7.5</option>
-                <option value="8">8</option>
-                <option value="8.5">8.5</option>
-                <option value="9">9</option>
-                <option value="9.5">9.5</option>
-                <option value="10">10</option>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <Button
-                variant="outline"
-                onClick={() => void handleCreateSet(false)}
-                className="h-11 rounded-xl"
-              >
-                Add Empty
-              </Button>
-              <Button
-                onClick={() => void handleCreateSet(true)}
-                className="h-11 rounded-xl"
-              >
-                Add Set
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirm remove dialog */}
+      {/* Confirm remove overlay */}
       {isRemoving && (
-        <div className="absolute inset-0 bg-background/95 flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-background/95 flex items-center justify-center p-4 z-30">
           <div className="text-center">
             <p className="text-sm font-medium mb-2">Remove exercise?</p>
             <p className="text-xs text-muted-foreground mb-4">
