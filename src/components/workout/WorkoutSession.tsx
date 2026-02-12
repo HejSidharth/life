@@ -246,13 +246,19 @@ export function WorkoutSession({
       </div>
 
       {/* Add Exercise Button */}
-      <Button
-        variant="outline"
-        className="w-full h-14 rounded-2xl border-dashed border-zinc-800 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 hover:text-white"
+      <button
+        className="w-full h-20 rounded-[2.5rem] bg-zinc-900/30 border border-zinc-900 hover:bg-zinc-900/50 hover:border-zinc-800 transition-all flex flex-col items-center justify-center gap-2 group"
         onClick={() => setIsExercisePickerOpen(true)}
       >
-        Add Exercise
-      </Button>
+        <div className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 group-hover:border-zinc-700 group-hover:scale-110 transition-all">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-zinc-500 group-hover:text-zinc-300">
+            <path d="M7 3v8M3 7h8" />
+          </svg>
+        </div>
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 group-hover:text-zinc-400">
+          Add Exercise
+        </span>
+      </button>
 
       {/* Exercise Picker */}
       <ExercisePicker

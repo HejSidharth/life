@@ -139,21 +139,21 @@ export function SetRow({
           {setNumber}
         </span>
 
-        <span className="flex-1 text-sm font-medium text-zinc-200 min-w-0">
+        <span className="flex-1 text-sm font-medium text-zinc-300 min-w-0">
           {weight != null && (
-            <span>{weight} {weightUnit}</span>
+            <span className="tabular-nums">{weight} {weightUnit}</span>
           )}
           {weight != null && reps != null && (
-            <span className="text-zinc-600 mx-1.5">&times;</span>
+            <span className="text-zinc-700 mx-2 text-xs opacity-50">&times;</span>
           )}
           {reps != null && (
-            <span>{reps}</span>
+            <span className="tabular-nums font-semibold">{reps}</span>
           )}
           {rpe != null && (
-            <span className="text-zinc-500 ml-2 text-xs">@{rpe}</span>
+            <span className="text-zinc-500 ml-2.5 text-[10px] font-black uppercase tracking-widest">@{rpe}</span>
           )}
           {setType !== "working" && (
-            <span className="text-zinc-600 ml-2 text-[10px] uppercase tracking-wider">
+            <span className="text-zinc-700 ml-3 text-[9px] font-black uppercase tracking-[0.2em] opacity-40">
               {SET_TYPE_LABELS[setType]}
             </span>
           )}
@@ -176,11 +176,11 @@ export function SetRow({
 
   // -- Active set or editing: focused input card --
   return (
-    <div className="rounded-2xl bg-zinc-900/40 border border-zinc-800/60 p-5 space-y-5">
+    <div className="rounded-[2rem] bg-zinc-900/30 border border-zinc-900/50 p-6 space-y-6 shadow-2xl">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span className="w-7 h-7 rounded-full bg-white text-black text-xs font-black flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <span className="w-8 h-8 rounded-full bg-white text-black text-[10px] font-black flex items-center justify-center">
             {setNumber}
           </span>
 
@@ -188,29 +188,28 @@ export function SetRow({
           <button
             type="button"
             onClick={() => setShowTypeSelector(!showTypeSelector)}
-            className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-zinc-400 transition-colors"
           >
             {SET_TYPE_LABELS[setType]}
           </button>
         </div>
 
         <div className="flex items-center gap-2">
-          {isEditMode && (
+          {isEditMode ? (
             <button
               type="button"
               onClick={handleCancelEdits}
-              className="text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-zinc-300 transition-colors px-2 py-1"
+              className="text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors px-2 py-1"
             >
               Cancel
             </button>
-          )}
-          {!isEditMode && (
+          ) : (
             <button
               type="button"
               onClick={onDelete}
-              className="text-zinc-700 hover:text-red-400 transition-colors p-1"
+              className="text-zinc-800 hover:text-red-500/50 transition-colors p-2"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" />
               </svg>
             </button>
