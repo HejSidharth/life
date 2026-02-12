@@ -216,10 +216,8 @@ export function ExerciseCard({
 
           {/* Finish Exercise — collapses the card */}
           <Button
-            variant="ghost"
-            size="sm"
             onClick={onToggleExpand}
-            className="w-full mt-1 h-10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-zinc-700 hover:text-zinc-400"
+            className="w-full mt-1 h-10 rounded-2xl bg-white text-black hover:bg-zinc-200 text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
           >
             Finish Exercise
           </Button>
