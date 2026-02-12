@@ -85,18 +85,6 @@ export function ExercisePicker({
     return true;
   });
 
-  // Group by first letter for alphabetical sections
-  const groupedExercises = filteredExercises.reduce((acc, exercise) => {
-    const letter = exercise.name[0].toUpperCase();
-    if (!acc[letter]) {
-      acc[letter] = [];
-    }
-    acc[letter].push(exercise);
-    return acc;
-  }, {} as Record<string, ExerciseLibraryItem[]>);
-
-  const sortedLetters = Object.keys(groupedExercises).sort();
-
   const handleSelect = (exercise: ExerciseLibraryItem) => {
     onSelect(exercise);
     onOpenChange(false);
@@ -188,39 +176,39 @@ export function ExercisePicker({
                 </div>
               )}
 
-              {/* Alphabetical Sections */}
-              {sortedLetters.length > 0 ? (
-                sortedLetters.map((letter) => (
-                  <div key={letter} className="py-2">
-                    <h3 className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-zinc-700 sticky top-0 bg-black/80 backdrop-blur-md z-10">
-                      {letter}
-                    </h3>
-                    <div className="space-y-0.5 px-3">
-                      {groupedExercises[letter].map((exercise) => (
-                        <ExerciseRowListItem
-                          key={exercise._id}
-                          exercise={exercise}
-                          onSelect={handleSelect}
-                        />
-                      ))}
+              {/* All Exercises List */}
+              <div className="py-2">
+                {!searchQuery && selectedMuscle === "All" && (
+                  <h3 className="px-6 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-zinc-700">
+                    All Exercises
+                  </h3>
+                )}
+                <div className="space-y-0.5 px-3">
+                  {filteredExercises.length > 0 ? (
+                    filteredExercises.map((exercise) => (
+                      <ExerciseRowListItem
+                        key={exercise._id}
+                        exercise={exercise}
+                        onSelect={handleSelect}
+                      />
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-20 text-center px-6">
+                      <p className="text-zinc-600 font-bold uppercase text-xs tracking-widest">No exercises found</p>
+                      <Button
+                        variant="link"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSelectedMuscle("All");
+                        }}
+                        className="mt-2 text-zinc-700 font-black uppercase text-[10px] tracking-[0.2em] hover:text-white transition-colors"
+                      >
+                        Clear filters
+                      </Button>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-                  <p className="text-zinc-600 font-bold uppercase text-xs tracking-widest">No exercises found</p>
-                  <Button
-                    variant="link"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setSelectedMuscle("All");
-                    }}
-                    className="mt-2 text-zinc-700 font-black uppercase text-[10px] tracking-[0.2em] hover:text-white transition-colors"
-                  >
-                    Clear filters
-                  </Button>
+                  )}
                 </div>
-              )}
+              </div>
 
               {/* Bottom Actions */}
               <div className="px-6 py-8">
