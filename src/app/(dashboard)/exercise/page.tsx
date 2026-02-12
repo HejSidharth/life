@@ -257,13 +257,22 @@ function ExerciseContent() {
               workoutExerciseId: weId as Id<"workoutExercises"> 
             }).then(() => {})
           }
-          onAddSet={(weId, libId) => 
+          onAddSet={(weId, libId, initialData) => 
             addSet({ 
               workoutExerciseId: weId as Id<"workoutExercises">,
               workoutId: activeWorkout._id as Id<"workouts">,
               userId: userId!,
               exerciseLibraryId: libId as Id<"exerciseLibrary">
-            }).then(() => {})
+            }).then(async (result: { setId: string }) => {
+              if (!initialData) return;
+
+              await completeSet({
+                setId: result.setId as Id<"exerciseSets">,
+                weight: initialData.weight,
+                reps: initialData.reps,
+                rpe: initialData.rpe,
+              });
+            })
           }
           onUpdateSet={(setId, data) => 
             updateSet({ 

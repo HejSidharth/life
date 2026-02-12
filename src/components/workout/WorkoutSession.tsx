@@ -27,7 +27,11 @@ interface WorkoutSessionProps {
   exercises: ExerciseLibraryItem[];
   onAddExercise: (exerciseLibraryId: string) => Promise<void>;
   onRemoveExercise: (workoutExerciseId: string) => Promise<void>;
-  onAddSet: (workoutExerciseId: string, exerciseLibraryId: string) => Promise<void>;
+  onAddSet: (
+    workoutExerciseId: string,
+    exerciseLibraryId: string,
+    initialData?: { weight?: number; reps?: number; rpe?: number }
+  ) => Promise<void>;
   onUpdateSet: (setId: string, data: Partial<WorkoutSet>) => Promise<void>;
   onCompleteSet: (
     setId: string,
@@ -205,7 +209,9 @@ export function WorkoutSession({
             exercise={exercise}
             isExpanded={!collapsedExercises.has(exercise._id)}
             onToggleExpand={() => toggleExerciseExpand(exercise._id)}
-            onAddSet={() => onAddSet(exercise._id, exercise.exerciseLibraryId)}
+            onAddSet={(initialData) =>
+              onAddSet(exercise._id, exercise.exerciseLibraryId, initialData)
+            }
             onUpdateSet={(setId, data) => onUpdateSet(setId, data)}
             onCompleteSet={onCompleteSet}
             onDeleteSet={onDeleteSet}

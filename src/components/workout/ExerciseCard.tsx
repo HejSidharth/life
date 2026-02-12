@@ -3,12 +3,24 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { SetRow } from "./SetRow";
 import { WorkoutExercise, WorkoutSet, calculateVolume } from "@/types/workout";
 
 interface ExerciseCardProps {
   exercise: WorkoutExercise;
-  onAddSet: () => void;
+  onAddSet: (initialData?: {
+    weight?: number;
+    reps?: number;
+    rpe?: number;
+  }) => Promise<void>;
   onUpdateSet: (setId: string, data: Partial<WorkoutSet>) => void;
   onCompleteSet: (setId: string, data: { weight?: number; reps?: number; rpe?: number; rir?: number }) => Promise<{ isPR?: boolean; prType?: string }>;
   onDeleteSet: (setId: string) => void;
@@ -42,6 +54,10 @@ export function ExerciseCard({
   defaultRestSeconds = 90,
 }: ExerciseCardProps) {
   const [isRemoving, setIsRemoving] = useState(false);
+  const [showAddSetDialog, setShowAddSetDialog] = useState(false);
+  const [newSetWeight, setNewSetWeight] = useState("");
+  const [newSetReps, setNewSetReps] = useState("");
+  const [newSetRpe, setNewSetRpe] = useState("");
 
   const completedSets = exercise.sets.filter((s) => s.isCompleted);
   const totalVolume = calculateVolume(exercise.sets);
@@ -58,6 +74,28 @@ export function ExerciseCard({
     } else {
       onRemoveExercise();
     }
+  };
+
+  const handleCreateSet = async (completeImmediately: boolean) => {
+    if (!completeImmediately) {
+      await onAddSet();
+      setShowAddSetDialog(false);
+      setNewSetWeight("");
+      setNewSetReps("");
+      setNewSetRpe("");
+      return;
+    }
+
+    await onAddSet({
+      weight: newSetWeight ? parseFloat(newSetWeight) : undefined,
+      reps: newSetReps ? parseInt(newSetReps, 10) : undefined,
+      rpe: newSetRpe ? parseFloat(newSetRpe) : undefined,
+    });
+
+    setShowAddSetDialog(false);
+    setNewSetWeight("");
+    setNewSetReps("");
+    setNewSetRpe("");
   };
 
   return (
@@ -178,7 +216,7 @@ export function ExerciseCard({
           <Button
             variant="outline"
             size="sm"
-            onClick={onAddSet}
+            onClick={() => setShowAddSetDialog(true)}
             className="w-full mt-3 h-10 rounded-2xl border-zinc-800 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white"
           >
             Add Set
@@ -193,6 +231,80 @@ export function ExerciseCard({
           )}
         </CardContent>
       )}
+
+      <Dialog open={showAddSetDialog} onOpenChange={setShowAddSetDialog}>
+        <DialogContent className="rounded-3xl border-border bg-card shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Add Set</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
+                  Weight
+                </label>
+                <Input
+                  type="number"
+                  placeholder={`0 ${exercise.sets[0]?.weightUnit ?? "lbs"}`}
+                  value={newSetWeight}
+                  onChange={(event) => setNewSetWeight(event.target.value)}
+                  className="h-11 rounded-xl"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
+                  Reps
+                </label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={newSetReps}
+                  onChange={(event) => setNewSetReps(event.target.value)}
+                  className="h-11 rounded-xl"
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
+                RPE
+              </label>
+              <Select
+                value={newSetRpe}
+                onChange={(event) => setNewSetRpe(event.target.value)}
+                className="h-11 rounded-xl"
+              >
+                <option value="">Select RPE</option>
+                <option value="5">5</option>
+                <option value="5.5">5.5</option>
+                <option value="6">6</option>
+                <option value="6.5">6.5</option>
+                <option value="7">7</option>
+                <option value="7.5">7.5</option>
+                <option value="8">8</option>
+                <option value="8.5">8.5</option>
+                <option value="9">9</option>
+                <option value="9.5">9.5</option>
+                <option value="10">10</option>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <Button
+                variant="outline"
+                onClick={() => void handleCreateSet(false)}
+                className="h-11 rounded-xl"
+              >
+                Add Empty
+              </Button>
+              <Button
+                onClick={() => void handleCreateSet(true)}
+                className="h-11 rounded-xl"
+              >
+                Add Set
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirm remove dialog */}
       {isRemoving && (
