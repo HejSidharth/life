@@ -95,7 +95,7 @@ export function RestTimer({
             strokeLinecap="round"
             className={cn(
               "transition-all duration-1000",
-              secondsRemaining <= 10 ? "text-red-500" : "text-primary"
+              secondsRemaining <= 10 ? "text-destructive" : "text-primary"
             )}
           />
         </svg>

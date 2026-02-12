@@ -25,6 +25,7 @@ import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Suspense } from "react";
+import { HydrationFlow } from "@/components/hydration/HydrationFlow";
 import type { Id } from "convex/_generated/dataModel";
 
 type BeverageType = "water" | "coffee" | "tea" | "juice" | "other";
@@ -70,11 +71,6 @@ function HydrationContent() {
   const removeHydration = useMutation(api.hydration.remove);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    beverageType: "water" as BeverageType,
-    amount: "250",
-    notes: "",
-  });
 
   const totalIntake = hydrationEntries.reduce((acc: number, h: { amount: number }) => acc + h.amount, 0);
   const progress = Math.min(100, (totalIntake / dailyGoal) * 100);
@@ -89,18 +85,15 @@ function HydrationContent() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCustomAdd = async (data: { type: BeverageType; amount: number; notes?: string }) => {
     if (!userId) return;
     await addHydration({
       userId,
-      beverageType: formData.beverageType,
-      amount: parseInt(formData.amount),
-      notes: formData.notes || undefined,
+      beverageType: data.type,
+      amount: data.amount,
+      notes: data.notes,
       consumedAt: getLogTimestamp(),
     });
-    setIsDialogOpen(false);
-    setFormData({ beverageType: "water", amount: "250", notes: "" });
   };
 
   return (
@@ -233,55 +226,11 @@ function HydrationContent() {
         </div>
       </div>
 
-      {/* Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="rounded-3xl border-border bg-card shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Log Beverage</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-5 py-4">
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Beverage</Label>
-              <Select
-                value={formData.beverageType}
-                onChange={(e) => setFormData({ ...formData, beverageType: e.target.value as BeverageType })}
-                className="h-14 rounded-2xl bg-zinc-900 border-0 focus-visible:ring-1 focus-visible:ring-white/20"
-              >
-                <option value="water">Water</option>
-                <option value="coffee">Coffee</option>
-                <option value="tea">Tea</option>
-                <option value="juice">Juice</option>
-                <option value="other">Other</option>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Amount (ml)</Label>
-              <Input
-                type="number"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                className="h-14 rounded-2xl bg-zinc-900 border-0 text-lg focus-visible:ring-1 focus-visible:ring-white/20"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1 text-zinc-600">Notes (Optional)</Label>
-              <Input
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Ice, lemon, etc."
-                className="h-14 rounded-2xl bg-zinc-900 border-0 focus-visible:ring-1 focus-visible:ring-white/20"
-              />
-            </div>
-
-            <Button type="submit" className="w-full h-14 rounded-2xl bg-white text-black hover:bg-zinc-200 font-bold text-lg">
-              Save Entry
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <HydrationFlow
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onComplete={handleCustomAdd}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { SetRow } from "./SetRow";
 import { WorkoutExercise, WorkoutSet, calculateVolume, SetType } from "@/types/workout";
 
@@ -67,10 +68,10 @@ export function ExerciseCard({
   };
 
   return (
-    <Card className="relative overflow-hidden">
+    <Card className={cn("relative", showMenu && "z-50")}>
       {/* Superset indicator */}
       {supersetLabel && (
-        <div className="absolute top-0 left-0 bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-br">
+        <div className="absolute top-0 left-0 bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-br rounded-tl-[inherit] z-10">
           {supersetLabel}
         </div>
       )}
@@ -154,7 +155,7 @@ export function ExerciseCard({
                       handleRemove();
                       setShowMenu(false);
                     }}
-                    className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-red-400 hover:text-red-300 hover:bg-zinc-800/50 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-destructive hover:text-destructive/80 hover:bg-zinc-800/50 transition-colors"
                   >
                     Remove
                   </button>
@@ -234,7 +235,7 @@ export function ExerciseCard({
 
       {/* Confirm remove overlay */}
       {isRemoving && (
-        <div className="absolute inset-0 bg-background/95 flex items-center justify-center p-4 z-30">
+        <div className="absolute inset-0 bg-background/95 flex items-center justify-center p-4 z-30 rounded-[inherit]">
           <div className="text-center">
             <p className="text-sm font-medium mb-2">Remove exercise?</p>
             <p className="text-xs text-muted-foreground mb-4">

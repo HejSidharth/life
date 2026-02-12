@@ -251,23 +251,13 @@ function DashboardContent() {
       </motion.div>
 
       {/* Recent Activity */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, ...springTransition }}
-        className="space-y-3"
-      >
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Recent Activity</h2>
-          <motion.button
-            className="text-sm text-muted-foreground flex items-center hover:text-foreground transition-colors"
-            whileHover={{ x: 4 }}
-            whileTap={{ scale: 0.95 }}
-            transition={springTransition}
-          >
+          <button className="text-sm text-muted-foreground flex items-center hover:text-foreground transition-colors">
             View all
             <ChevronRight className="w-4 h-4 ml-0.5" />
-          </motion.button>
+          </button>
         </div>
 
         <div className="space-y-2">
@@ -277,35 +267,27 @@ function DashboardContent() {
             </p>
           ) : (
             recentActivity.map((activity, index) => (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{
-                  delay: 0.6 + index * 0.08,
-                  ...springTransition,
-                }}
-                whileHover={{ scale: 1.01, x: 4 }}
-                whileTap={{ scale: 0.98 }}
                 className={cn(
                   "flex items-center justify-between p-4 rounded-2xl cursor-pointer",
                   "bg-card border border-border/50",
                   "hover:border-white/20 transition-all shadow-sm"
                 )}
               >
-              <div className="flex items-center gap-3">
-                <div>
-                  <p className={cn(
-                    "font-bold capitalize text-zinc-200",
-                    activity.highlight && "text-white"
-                  )}>
-                    {activity.name}
-                  </p>
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">
-                    {activity.detail}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className={cn(
+                      "font-bold capitalize text-zinc-200",
+                      activity.highlight && "text-white"
+                    )}>
+                      {activity.name}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wide">
+                      {activity.detail}
+                    </p>
+                  </div>
                 </div>
-              </div>
                 
                 <span className="text-xs text-muted-foreground">
                   {new Date(activity.timestamp).toLocaleTimeString([], {
@@ -313,11 +295,11 @@ function DashboardContent() {
                     minute: "2-digit",
                   })}
                 </span>
-              </motion.div>
+              </div>
             ))
           )}
         </div>
-      </motion.div>
+      </div>
 
       {/* Contribution Heatmap */}
       <motion.div

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ExerciseCard } from "./ExerciseCard";
 import { ExercisePicker } from "./ExercisePicker";
 import { RestTimer, useRestTimer } from "./RestTimer";
+import { WorkoutFinishFlow } from "./WorkoutFinishFlow";
 import {
   Dialog,
   DialogContent,
@@ -279,79 +280,56 @@ export function WorkoutSession({
         />
       )}
 
-      {/* Finish Workout Dialog */}
-      <Dialog open={showFinishDialog} onOpenChange={setShowFinishDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Finish Workout?</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-semibold">{formatDuration(elapsedSeconds)}</p>
-                <p className="text-xs text-muted-foreground">Duration</p>
-              </div>
-              <div>
-                <p className="text-2xl font-semibold">{completedSets}</p>
-                <p className="text-xs text-muted-foreground">Sets Completed</p>
-              </div>
-              <div>
-                <p className="text-2xl font-semibold">{totalVolume.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total Volume</p>
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-yellow-600 dark:text-yellow-400">
-                  {prCount}
-                </p>
-                <p className="text-xs text-muted-foreground">PRs</p>
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            {onSaveAsTemplate && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  onSaveAsTemplate();
-                  setShowFinishDialog(false);
-                }}
-              >
-                Save as Template
-              </Button>
-            )}
-            <Button onClick={handleFinishWorkout}>Finish Workout</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <WorkoutFinishFlow
+        open={showFinishDialog}
+        onOpenChange={setShowFinishDialog}
+        onComplete={handleFinishWorkout}
+        onSaveAsTemplate={onSaveAsTemplate ? () => {
+          onSaveAsTemplate();
+          setShowFinishDialog(false);
+        } : undefined}
+        stats={{
+          duration: elapsedSeconds,
+          sets: completedSets,
+          volume: totalVolume,
+          prs: prCount
+        }}
+      />
 
       {/* Cancel Workout Dialog */}
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancel Workout?</DialogTitle>
+        <DialogContent className="rounded-[2.5rem] border-zinc-900 bg-zinc-950 p-8 sm:p-10 max-w-sm mx-auto">
+          <DialogHeader className="space-y-4">
+            <DialogTitle className="text-2xl font-bold text-center">Cancel Workout?</DialogTitle>
+            <p className="text-sm text-zinc-500 text-center px-2">
+              This will discard all progress from this workout session.
+              {completedSets > 0 && (
+                <span className="block mt-2 text-zinc-400 font-medium">
+                  You have completed {completedSets} set{completedSets !== 1 ? "s" : ""}.
+                </span>
+              )}
+            </p>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            This will discard all progress from this workout session.
-            {completedSets > 0 && (
-              <span className="block mt-2 text-foreground">
-                You have completed {completedSets} set{completedSets !== 1 ? "s" : ""}.
-              </span>
-            )}
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
-              Keep Training
-            </Button>
+          
+          <div className="flex flex-col gap-4 mt-8">
             <Button
               variant="destructive"
               onClick={async () => {
                 await onCancelWorkout();
                 setShowCancelDialog(false);
               }}
+              className="h-14 rounded-full text-base font-bold transition-all active:scale-95"
             >
               Cancel Workout
             </Button>
-          </DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setShowCancelDialog(false)}
+              className="h-14 rounded-full text-base font-bold bg-zinc-900 text-zinc-300 hover:bg-zinc-800 transition-all active:scale-95"
+            >
+              Keep Training
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

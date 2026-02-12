@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { format } from "date-fns";
+import { FoodLogFlow, FoodData } from "@/components/food/FoodLogFlow";
 import type { Id } from "convex/_generated/dataModel";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
@@ -124,18 +125,9 @@ function FoodContent() {
   const seedPackagedFoods = useMutation(api.foodCatalog.seedPackagedFoods);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState<MealType>("lunch");
   const [barcodeInput, setBarcodeInput] = useState("");
-  const [formData, setFormData] = useState({
-    name: "",
-    mealType: "lunch" as MealType,
-    calories: "",
-    protein: "",
-    carbs: "",
-    fat: "",
-    fiber: "",
-    portionSize: "1 serving",
-    notes: "",
-  });
+
   const barcodeLookup = useQuery(
     api.foodCatalog.lookupByBarcode,
     barcodeInput.trim().length > 3 ? { barcode: barcodeInput.trim() } : "skip"
@@ -160,26 +152,23 @@ function FoodContent() {
     snack: foods.filter((f: { mealType: string }) => f.mealType === "snack"),
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogFood = async (data: FoodData) => {
     if (!userId) return;
     await addFood({
       userId,
-      name: formData.name,
-      mealType: formData.mealType,
-      calories: parseInt(formData.calories),
-      protein: parseInt(formData.protein),
-      carbs: parseInt(formData.carbs),
-      fat: parseInt(formData.fat),
-      fiber: formData.fiber ? parseInt(formData.fiber) : undefined,
-      portionSize: formData.portionSize,
-      notes: formData.notes || undefined,
+      name: data.name,
+      mealType: data.mealType,
+      calories: data.calories,
+      protein: data.protein,
+      carbs: data.carbs,
+      fat: data.fat,
+      fiber: data.fiber,
+      portionSize: data.portionSize,
+      notes: data.notes,
       consumedAt: getLogTimestamp(),
       source: "manual" as FoodSource,
-      barcode: barcodeInput || undefined,
+      barcode: data.barcode,
     });
-    setIsDialogOpen(false);
-    resetForm();
   };
 
   const handleAddFromCatalog = async (item: BarcodeCandidate) => {
@@ -187,7 +176,7 @@ function FoodContent() {
     await addFood({
       userId,
       name: item.name,
-      mealType: formData.mealType,
+      mealType: selectedMealType,
       calories: item.calories,
       protein: item.protein,
       carbs: item.carbs,
@@ -204,20 +193,6 @@ function FoodContent() {
 
   const handleSeedFoods = async () => {
     await seedPackagedFoods({});
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      mealType: "lunch",
-      calories: "",
-      protein: "",
-      carbs: "",
-      fat: "",
-      fiber: "",
-      portionSize: "1 serving",
-      notes: "",
-    });
   };
 
   return (
@@ -302,7 +277,7 @@ function FoodContent() {
                   addFood({
                     userId: userId!,
                     name: food.name,
-                    mealType: formData.mealType,
+                    mealType: selectedMealType,
                     calories: food.calories,
                     protein: food.protein,
                     carbs: food.carbs,
@@ -334,7 +309,7 @@ function FoodContent() {
                     addFood({
                       userId: userId!,
                       name: food.name,
-                      mealType: formData.mealType,
+                      mealType: selectedMealType,
                       calories: food.calories,
                       protein: food.protein,
                       carbs: food.carbs,
@@ -371,7 +346,7 @@ function FoodContent() {
                 <div 
                   className="p-4 bg-zinc-950/30 rounded-2xl border border-zinc-900/50 flex items-center justify-center cursor-pointer hover:bg-zinc-900/50 transition-all"
                   onClick={() => {
-                    setFormData({ ...formData, mealType: type });
+                    setSelectedMealType(type);
                     setIsDialogOpen(true);
                   }}
                 >
@@ -416,163 +391,12 @@ function FoodContent() {
         ))}
       </div>
 
-      {/* Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="rounded-3xl border-border bg-card shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Log Food</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
-                Barcode
-              </Label>
-              <Input
-                value={barcodeInput}
-                onChange={(e) => setBarcodeInput(e.target.value)}
-                placeholder="Scan or enter barcode"
-                className="h-12 rounded-xl bg-zinc-900 border-0 focus-visible:ring-1 focus-visible:ring-white/20"
-              />
-              {barcodeLookup?.candidates?.length ? (
-                <div className="space-y-2 pt-2">
-                  <p className="text-[10px] text-zinc-500 uppercase tracking-wider">
-                    Barcode matches ({(barcodeLookup.confidence * 100).toFixed(0)}% confidence)
-                  </p>
-                  {barcodeLookup.candidates.slice(0, 3).map((candidate) => (
-                    <button
-                      key={candidate._id}
-                      type="button"
-                      className="w-full text-left rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 hover:border-zinc-600"
-                      onClick={() => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          name: candidate.name,
-                          calories: String(candidate.calories),
-                          protein: String(candidate.protein),
-                          carbs: String(candidate.carbs),
-                          fat: String(candidate.fat),
-                          fiber: candidate.fiber ? String(candidate.fiber) : "",
-                          portionSize: `${candidate.servingSize}${candidate.servingUnit}`,
-                        }));
-                      }}
-                    >
-                      <p className="text-sm font-semibold text-zinc-100">
-                        {candidate.name}
-                      </p>
-                      <p className="text-xs text-zinc-500">
-                        {candidate.calories} kcal · P {candidate.protein} · C {candidate.carbs} · F {candidate.fat}
-                      </p>
-                    </button>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handleAddFromCatalog(barcodeLookup.candidates[0])}
-                  >
-                    Quick Add Best Match
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Food Name</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Chicken, rice, etc."
-                className="h-12 rounded-xl bg-zinc-900 border-0 focus-visible:ring-1 focus-visible:ring-white/20"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Meal</Label>
-                <Select
-                  value={formData.mealType}
-                  onChange={(e) => setFormData({ ...formData, mealType: e.target.value as MealType })}
-                  className="h-12 rounded-xl bg-zinc-900 border-0"
-                >
-                  <option value="breakfast">Breakfast</option>
-                  <option value="lunch">Lunch</option>
-                  <option value="dinner">Dinner</option>
-                  <option value="snack">Snack</option>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Portion</Label>
-                <Input
-                  value={formData.portionSize}
-                  onChange={(e) => setFormData({ ...formData, portionSize: e.target.value })}
-                  placeholder="1 cup, 100g"
-                  className="h-12 rounded-xl bg-zinc-900 border-0"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Calories</Label>
-                <Input
-                  type="number"
-                  value={formData.calories}
-                  onChange={(e) => setFormData({ ...formData, calories: e.target.value })}
-                  placeholder="kcal"
-                  className="h-12 rounded-xl bg-zinc-900 border-0"
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Protein (g)</Label>
-                <Input
-                  type="number"
-                  value={formData.protein}
-                  onChange={(e) => setFormData({ ...formData, protein: e.target.value })}
-                  placeholder="g"
-                  className="h-12 rounded-xl bg-zinc-900 border-0"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1 text-zinc-600">Carbs</Label>
-                <Input
-                  type="number"
-                  value={formData.carbs}
-                  onChange={(e) => setFormData({ ...formData, carbs: e.target.value })}
-                  className="h-12 rounded-xl bg-zinc-900 border-0"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1 text-zinc-600">Fat</Label>
-                <Input
-                  type="number"
-                  value={formData.fat}
-                  onChange={(e) => setFormData({ ...formData, fat: e.target.value })}
-                  className="h-12 rounded-xl bg-zinc-900 border-0"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1 text-zinc-600">Fiber</Label>
-                <Input
-                  type="number"
-                  value={formData.fiber}
-                  onChange={(e) => setFormData({ ...formData, fiber: e.target.value })}
-                  className="h-12 rounded-xl bg-zinc-900 border-0"
-                />
-              </div>
-            </div>
-
-            <Button type="submit" className="w-full h-14 rounded-2xl bg-white text-black hover:bg-zinc-200 font-bold text-lg mt-2">
-              Save Entry
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <FoodLogFlow
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onComplete={handleLogFood}
+        initialMealType={selectedMealType}
+      />
     </div>
   );
 }

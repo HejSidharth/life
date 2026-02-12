@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { format } from "date-fns";
 import { formatDuration } from "@/types/workout";
 
 interface WorkoutDetailSet {
@@ -76,11 +77,7 @@ export function WorkoutDetailDialog({
           </DialogTitle>
           {workout && (
             <p className="text-xs text-zinc-500 mt-1">
-              {new Date(workout.startedAt).toLocaleDateString(undefined, {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })}
+              {format(new Date(workout.startedAt), "eeee, MMMM do")}
               {workout.duration != null && ` · ${formatDuration(workout.duration * 60)}`}
             </p>
           )}

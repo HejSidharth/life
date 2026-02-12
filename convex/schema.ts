@@ -336,6 +336,7 @@ export default defineSchema({
     .index("by_profile_equipment", ["gymProfileId", "equipmentKey"]),
 
   planTemplates: defineTable({
+    userId: v.optional(v.string()), // For user-created plans
     name: v.string(),
     slug: v.string(),
     goal: v.union(
@@ -356,7 +357,8 @@ export default defineSchema({
   })
     .index("by_slug", ["slug"])
     .index("by_goal", ["goal"])
-    .index("by_experience", ["experienceLevel"]),
+    .index("by_experience", ["experienceLevel"])
+    .index("by_user", ["userId"]),
 
   planBlocks: defineTable({
     planTemplateId: v.id("planTemplates"),

@@ -237,7 +237,7 @@ export const SET_TYPE_COLORS: Record<SetType, string> = {
   warmup: "text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-950",
   working: "text-primary bg-primary/10",
   drop: "text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-950",
-  failure: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-950",
+  failure: "text-destructive bg-destructive/10",
   rest_pause: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
   backoff: "text-muted-foreground bg-muted",
 };

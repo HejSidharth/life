@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -97,10 +98,7 @@ function formatSetsForRow(entry: ExerciseHistoryEntry): string {
 }
 
 function formatDateLabel(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
+  return format(new Date(timestamp), "MMM d");
 }
 
 function buildPolyline(points: ChartPoint[]): string {
@@ -212,7 +210,7 @@ export function ExerciseHistoryDialog({
                       className={cn(
                         "text-xl font-bold",
                         percentChange > 0 && "text-green-500",
-                        percentChange < 0 && "text-red-500",
+                        percentChange < 0 && "text-destructive",
                         percentChange === 0 && "text-zinc-100"
                       )}
                     >

@@ -1,11 +1,31 @@
 "use client";
 
-import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, Dumbbell, Apple, Droplets, Settings } from "lucide-react";
-import { useRef, useState } from "react";
+import {
+  Home,
+  Dumbbell,
+  Apple,
+  Droplets,
+  Settings,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, PanInfo, useAnimation } from "framer-motion";
+import { useState, useEffect, type MouseEvent as ReactMouseEvent } from "react";
+import { useWizard } from "@/context/WizardContext";
+
+const DOCK_WIDTH = 340;
+const NAV_X = 0;
+const ACTION_X = -DOCK_WIDTH;
+const SWIPE_DISTANCE_THRESHOLD = 48;
+const SWIPE_VELOCITY_THRESHOLD = 420;
+const DRAG_INTENT_THRESHOLD = 8;
+
+type DockMode = "nav" | "action";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Home" },
@@ -15,99 +35,235 @@ const navItems = [
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 
+function getXForMode(mode: DockMode): number {
+  return mode === "nav" ? NAV_X : ACTION_X;
+}
+
+function clampX(x: number): number {
+  return Math.min(NAV_X, Math.max(ACTION_X, x));
+}
+
+function getTargetModeFromDrag(
+  offsetX: number,
+  velocityX: number,
+  currentMode: DockMode
+): DockMode {
+  if (
+    offsetX <= -SWIPE_DISTANCE_THRESHOLD ||
+    velocityX <= -SWIPE_VELOCITY_THRESHOLD
+  ) {
+    return "action";
+  }
+
+  if (
+    offsetX >= SWIPE_DISTANCE_THRESHOLD ||
+    velocityX >= SWIPE_VELOCITY_THRESHOLD
+  ) {
+    return "nav";
+  }
+
+  const projectedX = clampX(getXForMode(currentMode) + offsetX);
+  const midpoint = (NAV_X + ACTION_X) / 2;
+  return projectedX <= midpoint ? "action" : "nav";
+}
+
 export function Dock() {
   const pathname = usePathname();
-  const mouseX = useMotionValue(Infinity);
+  const isWorkoutPage = pathname === "/exercise";
+  const [mode, setMode] = useState<DockMode>("nav");
+  const [suppressTap, setSuppressTap] = useState(false);
+  const controls = useAnimation();
+  const { isWizardOpen } = useWizard();
+
+  const snapToMode = (targetMode: DockMode) => {
+    setMode(targetMode);
+    return controls.start({
+      x: getXForMode(targetMode),
+      transition: { type: "spring", stiffness: 420, damping: 36 },
+    });
+  };
+
+  // Reset mode when navigating away from workout page
+  useEffect(() => {
+    if (!isWorkoutPage) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Route transitions must force dock back to nav mode.
+      setMode("nav");
+      setSuppressTap(false);
+      controls.set({ x: NAV_X });
+    }
+  }, [isWorkoutPage, controls, setSuppressTap]);
+
+  const handleDrag = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    if (!isWorkoutPage) return;
+    if (Math.abs(info.offset.x) > DRAG_INTENT_THRESHOLD) {
+      setSuppressTap(true);
+    }
+  };
+
+  const handleDragEnd = (
+    _event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    if (!isWorkoutPage) return;
+
+    const targetMode = getTargetModeFromDrag(info.offset.x, info.velocity.x, mode);
+    void snapToMode(targetMode);
+    window.setTimeout(() => setSuppressTap(false), 140);
+  };
+
+  const toggleMode = () => {
+    if (!isWorkoutPage) return;
+    const nextMode = mode === "nav" ? "action" : "nav";
+    void snapToMode(nextMode);
+  };
+
+  const shouldIgnoreClick = (
+    event: ReactMouseEvent<HTMLButtonElement | HTMLAnchorElement>
+  ): boolean => {
+    if (!suppressTap) return false;
+    event.preventDefault();
+    event.stopPropagation();
+    return true;
+  };
+
+  const handleActionClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (shouldIgnoreClick(event)) return;
+    // Dispatch custom event to trigger workout start
+    window.dispatchEvent(new CustomEvent("trigger-start-workout"));
+  };
 
   return (
-    <div className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-      <motion.div
-        onMouseMove={(e) => mouseX.set(e.pageX)}
-        onMouseLeave={() => mouseX.set(Infinity)}
-        className="mx-auto flex h-16 items-end gap-3 rounded-3xl bg-zinc-900/80 px-4 pb-3 border border-white/5 backdrop-blur-xl pointer-events-auto shadow-2xl"
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+    <motion.div 
+      className="fixed bottom-6 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ 
+        opacity: isWizardOpen ? 0 : 1,
+        y: isWizardOpen ? 20 : 0,
+        pointerEvents: isWizardOpen ? "none" : "auto"
+      }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+    >
+      <div 
+        className={cn(
+          "relative overflow-hidden h-16 rounded-3xl bg-zinc-900/80 border border-white/5 backdrop-blur-xl shadow-2xl",
+          isWizardOpen ? "pointer-events-none" : "pointer-events-auto"
+        )}
+        style={{ width: isWorkoutPage ? `${DOCK_WIDTH}px` : "auto" }}
       >
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <DockIcon
-              key={item.href}
-              mouseX={mouseX}
-              href={item.href}
-              icon={item.icon}
-              label={item.label}
-              isActive={isActive}
-            />
-          );
-        })}
-      </motion.div>
-    </div>
+        <motion.div
+          className="flex h-full items-center"
+          drag={isWorkoutPage ? "x" : false}
+          dragConstraints={{ left: ACTION_X, right: NAV_X }}
+          dragElastic={0.1}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
+          animate={controls}
+          initial={{ x: NAV_X }}
+          style={{ width: isWorkoutPage ? "200%" : "100%" }}
+        >
+          {/* Page 1: Navigation */}
+          <div
+            className="flex h-full items-center gap-3 px-4 shrink-0 justify-center"
+            style={{ width: isWorkoutPage ? `${DOCK_WIDTH}px` : "auto" }}
+          >
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <DockIcon
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  isActive={isActive}
+                  suppressTap={suppressTap}
+                />
+              );
+            })}
+            
+            {isWorkoutPage && <div className="w-8 shrink-0" aria-hidden />}
+          </div>
+
+          {/* Page 2: Action Button (Only for Workout Page) */}
+          {isWorkoutPage && (
+            <div
+              className="flex h-full items-center gap-3 pr-4 pl-2 shrink-0"
+              style={{ width: `${DOCK_WIDTH}px` }}
+            >
+              <div className="w-8 shrink-0" aria-hidden />
+              <button
+                onClick={handleActionClick}
+                className="flex-1 h-11 rounded-2xl bg-white text-black flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-[0.2em] shadow-lg active:scale-95 transition-transform"
+                type="button"
+              >
+                <Plus className="w-4 h-4" strokeWidth={3} />
+                Start New Workout
+              </button>
+            </div>
+          )}
+        </motion.div>
+
+        {isWorkoutPage && (
+          <button
+            type="button"
+            aria-label={mode === "nav" ? "Show workout action" : "Show navigation"}
+            onClick={toggleMode}
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 h-10 w-10 rounded-xl bg-zinc-800/95 border border-white/10 text-zinc-200 hover:bg-zinc-700 transition-colors flex items-center justify-center",
+              mode === "nav" ? "right-2" : "left-2"
+            )}
+          >
+            {mode === "nav" ? (
+              <ChevronLeft className="h-4 w-4" strokeWidth={2.5} />
+            ) : (
+              <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
+            )}
+          </button>
+        )}
+      </div>
+    </motion.div>
   );
 }
 
-function DockIcon({ mouseX, href, icon: Icon, label, isActive }: any) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const distance = useTransform(mouseX, (val: number) => {
-    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
-    return val - bounds.x - bounds.width / 2;
-  });
-
-  const widthTransform = useTransform(distance, [-150, 0, 150], [44, 70, 44]);
-  const heightTransform = useTransform(distance, [-150, 0, 150], [44, 70, 44]);
-
-  const width = useSpring(widthTransform, {
-    mass: 0.1,
-    stiffness: 150,
-    damping: 12,
-  });
-  const height = useSpring(heightTransform, {
-    mass: 0.1,
-    stiffness: 150,
-    damping: 12,
-  });
-
+function DockIcon({ href, icon: Icon, label, isActive, suppressTap }: {
+  href: string; 
+  icon: LucideIcon; 
+  label: string; 
+  isActive: boolean;
+  suppressTap: boolean;
+}) {
   return (
-    <Link href={href} className="relative">
-      <motion.div
-        ref={ref}
-        style={{ width, height }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+    <Link
+      href={href}
+      className="relative group"
+      onClick={(event) => {
+        if (!suppressTap) return;
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+    >
+      <div
         className={cn(
-          "relative flex items-center justify-center rounded-2xl transition-colors duration-300",
-          isActive ? "bg-white text-black" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+          "relative flex h-11 w-11 items-center justify-center rounded-2xl transition-colors duration-200",
+          isActive 
+            ? "bg-white text-black" 
+            : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
         )}
-        whileTap={{ scale: 0.9 }}
       >
         <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
         
-        {/* Tooltip */}
-        <AnimatePresence>
-          {isHovered && (
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.8 }}
-              animate={{ opacity: 1, y: -45, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.8 }}
-              className="absolute px-3 py-1 rounded-lg bg-zinc-800 border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest whitespace-nowrap pointer-events-none"
-            >
-              {label}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Simple Static Tooltip on hover (CSS only) */}
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg bg-zinc-800 border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest whitespace-nowrap pointer-events-none hidden group-hover:block">
+          {label}
+        </div>
 
         {/* Active Dot */}
         {isActive && (
-          <motion.div
-            layoutId="dock-active-dot"
-            className="absolute -bottom-1.5 w-1 h-1 bg-white rounded-full"
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          />
+          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
         )}
-      </motion.div>
+      </div>
     </Link>
   );
 }

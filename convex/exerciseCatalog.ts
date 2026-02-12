@@ -344,24 +344,7 @@ export const seedCatalog = mutation({
   },
 });
 
-export const getCatalogStats = query({
-  args: {},
-  handler: async (ctx) => {
-    const [families, variants, plans, media] = await Promise.all([
-      ctx.db.query("exerciseFamilies").collect(),
-      ctx.db.query("exerciseVariants").collect(),
-      ctx.db.query("planTemplates").collect(),
-      ctx.db.query("exerciseTechniqueMedia").collect(),
-    ]);
 
-    return {
-      familyCount: families.length,
-      variantCount: variants.length,
-      planTemplateCount: plans.length,
-      techniqueMediaCount: media.length,
-    };
-  },
-});
 
 export const getVariants = query({
   args: {

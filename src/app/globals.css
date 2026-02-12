@@ -16,7 +16,7 @@
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
+  --color-destructive: oklch(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -56,9 +56,9 @@
   --accent: 210 10% 25%;
   --accent-foreground: 0 0% 98%;
 
-  /* Red for destructive */
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
+  /* Red 400 for destructive */
+  --destructive: 70.4% 0.191 22.216;
+  --destructive-foreground: 0 0% 98%;
 
   /* Subtle borders */
   --border: 0 0% 15%;
@@ -87,8 +87,8 @@
   --muted-foreground: 0 0% 50%;
   --accent: 210 10% 25%;
   --accent-foreground: 0 0% 98%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
+  --destructive: 70.4% 0.191 22.216;
+  --destructive-foreground: 0 0% 98%;
   --border: 0 0% 15%;
   --input: 0 0% 15%;
   --ring: 0 0% 98%;
