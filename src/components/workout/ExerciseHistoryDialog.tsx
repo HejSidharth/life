@@ -168,19 +168,20 @@ export function ExerciseHistoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{exerciseName} History</DialogTitle>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-8 sm:p-10">
+        <DialogHeader className="mb-6">
+          <DialogTitle className="text-2xl font-bold">{exerciseName} History</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
+        <div className="space-y-10">
+          <div className="flex flex-wrap gap-3">
             {(Object.keys(METRIC_LABELS) as ProgressMetric[]).map((metricKey) => (
               <Button
                 key={metricKey}
                 variant={metric === metricKey ? "default" : "outline"}
                 size="sm"
                 onClick={() => setMetric(metricKey)}
+                className="rounded-full px-6"
               >
                 {METRIC_LABELS[metricKey]}
               </Button>
@@ -188,30 +189,31 @@ export function ExerciseHistoryDialog({
           </div>
 
           {chartPoints.length === 0 ? (
-            <Card>
-              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            <Card className="border-zinc-900 bg-zinc-950/50">
+              <CardContent className="py-20 text-center text-sm text-muted-foreground">
                 Complete at least one set for this exercise to unlock progress charts.
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardContent className="pt-4 space-y-4">
-                <div className="grid grid-cols-3 gap-3 text-sm">
+            <Card className="border-zinc-900 bg-zinc-950/50">
+              <CardContent className="p-8 space-y-8">
+                <div className="grid grid-cols-3 gap-8 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Latest</p>
-                    <p className="font-semibold">{formatMetricValue(latestValue, metric)}</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-1">Latest</p>
+                    <p className="text-xl font-bold text-zinc-100">{formatMetricValue(latestValue, metric)}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Best</p>
-                    <p className="font-semibold">{formatMetricValue(bestValue, metric)}</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-1">Best</p>
+                    <p className="text-xl font-bold text-zinc-100">{formatMetricValue(bestValue, metric)}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Trend</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 mb-1">Trend</p>
                     <p
                       className={cn(
-                        "font-semibold",
-                        percentChange > 0 && "text-green-600 dark:text-green-400",
-                        percentChange < 0 && "text-red-600 dark:text-red-400"
+                        "text-xl font-bold",
+                        percentChange > 0 && "text-green-500",
+                        percentChange < 0 && "text-red-500",
+                        percentChange === 0 && "text-zinc-100"
                       )}
                     >
                       {percentChange > 0 ? "+" : ""}
@@ -220,47 +222,49 @@ export function ExerciseHistoryDialog({
                   </div>
                 </div>
 
-                <svg
-                  viewBox="0 0 700 220"
-                  className="w-full h-44 rounded-md border border-border bg-background"
-                  role="img"
-                  aria-label={`${METRIC_LABELS[metric]} over time`}
-                >
-                  <polyline
-                    points={polyline}
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    className="text-primary"
-                  />
-                  {chartPoints.map((point, index) => {
-                    const values = chartPoints.map((valuePoint) => valuePoint.value);
-                    const maxValue = Math.max(...values, 1);
-                    const minValue = Math.min(...values, 0);
-                    const range = maxValue - minValue || 1;
-                    const padding = 24;
-                    const x =
-                      chartPoints.length === 1
-                        ? 350
-                        : padding + (index / (chartPoints.length - 1)) * (700 - padding * 2);
-                    const y =
-                      220 -
-                      padding -
-                      ((point.value - minValue) / range) * (220 - padding * 2);
+                <div className="relative pt-4">
+                  <svg
+                    viewBox="0 0 700 220"
+                    className="w-full h-48 rounded-2xl bg-black/40 border border-zinc-900/50"
+                    role="img"
+                    aria-label={`${METRIC_LABELS[metric]} over time`}
+                  >
+                    <polyline
+                      points={polyline}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      className="text-white"
+                    />
+                    {chartPoints.map((point, index) => {
+                      const values = chartPoints.map((valuePoint) => valuePoint.value);
+                      const maxValue = Math.max(...values, 1);
+                      const minValue = Math.min(...values, 0);
+                      const range = maxValue - minValue || 1;
+                      const padding = 24;
+                      const x =
+                        chartPoints.length === 1
+                          ? 350
+                          : padding + (index / (chartPoints.length - 1)) * (700 - padding * 2);
+                      const y =
+                        220 -
+                        padding -
+                        ((point.value - minValue) / range) * (220 - padding * 2);
 
-                    return (
-                      <circle
-                        key={`${point.date}-${index}`}
-                        cx={x}
-                        cy={y}
-                        r="4"
-                        className="fill-primary"
-                      />
-                    );
-                  })}
-                </svg>
+                      return (
+                        <circle
+                          key={`${point.date}-${index}`}
+                          cx={x}
+                          cy={y}
+                          r="5"
+                          className="fill-white stroke-black stroke-2"
+                        />
+                      );
+                    })}
+                  </svg>
+                </div>
 
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between text-[10px] font-bold text-zinc-600 uppercase tracking-widest px-1">
                   <span>{chartPoints[0]?.label}</span>
                   <span>{chartPoints[chartPoints.length - 1]?.label}</span>
                 </div>
@@ -268,35 +272,35 @@ export function ExerciseHistoryDialog({
             </Card>
           )}
 
-          <Card>
-            <CardContent className="pt-4">
-              <h3 className="text-sm font-medium mb-3">Recent Sessions</h3>
+          <Card className="border-zinc-900 bg-zinc-950/50">
+            <CardContent className="p-8">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-6">Recent Sessions</h3>
               {history && history.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {[...history]
                     .sort((a, b) => b.date - a.date)
                     .slice(0, 12)
                     .map((entry) => (
                       <div
                         key={`${entry.date}-${entry.workoutName || "workout"}`}
-                        className="flex items-start justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0"
+                        className="flex items-start justify-between gap-4 border-b border-zinc-900 pb-4 last:border-0 last:pb-0"
                       >
                         <div>
-                          <p className="text-sm font-medium">
+                          <p className="text-sm font-bold text-zinc-100 mb-0.5">
                             {entry.workoutName || "Workout"}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">
                             {formatDateLabel(entry.date)}
                           </p>
                         </div>
-                        <p className="text-xs text-muted-foreground text-right">
+                        <p className="text-xs font-medium text-zinc-500 text-right pt-1">
                           {formatSetsForRow(entry)}
                         </p>
                       </div>
                     ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No sessions recorded yet.</p>
+                <p className="text-sm text-zinc-600 text-center py-4">No sessions recorded yet.</p>
               )}
             </CardContent>
           </Card>
