@@ -225,9 +225,9 @@ function ExerciseContent() {
 
   const handleCreatePlan = async () => {
     if (!userId) return;
-    const ensuredProfile = defaultProfile
-      ? defaultProfile._id
-      : (await createStarterProfile({ userId })).profileId;
+    const ensuredProfile: Id<"gymProfiles"> = defaultProfile
+      ? (defaultProfile._id as Id<"gymProfiles">)
+      : ((await createStarterProfile({ userId })).profileId as Id<"gymProfiles">);
     await createDefaultPlan({
       userId,
       goal: planGoal,
