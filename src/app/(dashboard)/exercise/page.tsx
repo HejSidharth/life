@@ -77,8 +77,17 @@ interface PlanSummary {
 }
 
 interface WorkoutCompletionResult {
-  progressionDecision: "increase" | "hold" | "reduce";
+  progressionDecision: string;
   decisionReason: string;
+}
+
+function toProgressionDecision(
+  value: string
+): "increase" | "hold" | "reduce" {
+  if (value === "increase" || value === "hold" || value === "reduce") {
+    return value;
+  }
+  return "hold";
 }
 
 function ExerciseContent() {
@@ -302,7 +311,9 @@ function ExerciseContent() {
                   userId,
                   progressId: planSummary.progressId as Id<"userPlanDayProgress">,
                   workoutId: activeWorkout._id as Id<"workouts">,
-                  progressionDecision: result.progressionDecision,
+                  progressionDecision: toProgressionDecision(
+                    result.progressionDecision
+                  ),
                   decisionReason: result.decisionReason,
                 });
               }
