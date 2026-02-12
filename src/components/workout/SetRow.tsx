@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { SetType, SET_TYPE_LABELS, SET_TYPE_COLORS } from "@/types/workout";
 
@@ -17,7 +18,6 @@ interface SetRowProps {
   weightUnit: "lbs" | "kg";
   isCompleted: boolean;
   isPR?: boolean;
-  prType?: string;
   previousWeight?: number;
   previousReps?: number;
   onComplete: (data: {
@@ -42,6 +42,20 @@ interface SetRowProps {
 }
 
 const SET_TYPES: SetType[] = ["warmup", "working", "drop", "failure", "rest_pause", "backoff"];
+const RPE_OPTIONS = [
+  "",
+  "5",
+  "5.5",
+  "6",
+  "6.5",
+  "7",
+  "7.5",
+  "8",
+  "8.5",
+  "9",
+  "9.5",
+  "10",
+];
 
 export function SetRow({
   setNumber,
@@ -54,7 +68,6 @@ export function SetRow({
   weightUnit,
   isCompleted,
   isPR,
-  prType,
   previousWeight,
   previousReps,
   onComplete,
@@ -69,8 +82,10 @@ export function SetRow({
   const [localReps, setLocalReps] = useState(reps?.toString() || "");
   const [localRpe, setLocalRpe] = useState(rpe?.toString() || "");
   const [localRir, setLocalRir] = useState(rir?.toString() || "");
+  const [isEditingCompleted, setIsEditingCompleted] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const typeMenuRef = useRef<HTMLDivElement>(null);
+  const isEditable = !isCompleted || isEditingCompleted;
 
   // Close menu on outside click
   useEffect(() => {
@@ -117,16 +132,18 @@ export function SetRow({
     }
   };
 
-  const prLabel =
-    prType === "1rm"
-      ? "1RM"
-      : prType === "volume"
-      ? "VOL"
-      : prType === "weight"
-      ? "WT"
-      : prType === "reps"
-      ? "REP"
-      : "PR";
+  const handleSaveEdits = () => {
+    handleBlur();
+    setIsEditingCompleted(false);
+  };
+
+  const handleCancelEdits = () => {
+    setLocalWeight(weight?.toString() || "");
+    setLocalReps(reps?.toString() || "");
+    setLocalRpe(rpe?.toString() || "");
+    setLocalRir(rir?.toString() || "");
+    setIsEditingCompleted(false);
+  };
 
   return (
     <div
@@ -146,13 +163,13 @@ export function SetRow({
       <div className="relative" ref={typeMenuRef}>
         <button
           type="button"
-          onClick={() => !isCompleted && setShowTypeMenu(!showTypeMenu)}
           className={cn(
             "w-8 h-8 rounded-md text-xs font-medium flex items-center justify-center transition-colors",
             SET_TYPE_COLORS[setType],
-            !isCompleted && "cursor-pointer hover:opacity-80"
+            isEditable && "cursor-pointer hover:opacity-80"
           )}
-          disabled={isCompleted}
+          onClick={() => isEditable && setShowTypeMenu(!showTypeMenu)}
+          disabled={!isEditable}
         >
           {setNumber}
         </button>
@@ -200,7 +217,7 @@ export function SetRow({
           onBlur={handleBlur}
           placeholder="0"
           className="h-8 text-center pr-8"
-          disabled={isCompleted}
+          disabled={!isEditable}
         />
         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
           {weightUnit}
@@ -215,23 +232,25 @@ export function SetRow({
         onBlur={handleBlur}
         placeholder="0"
         className="h-8 text-center"
-        disabled={isCompleted}
+        disabled={!isEditable}
       />
 
       {/* RPE (optional) */}
       {showRpe && (
-        <Input
-          type="number"
-          min="1"
-          max="10"
-          step="0.5"
+        <Select
           value={localRpe}
           onChange={(e) => setLocalRpe(e.target.value)}
           onBlur={handleBlur}
-          placeholder="RPE"
-          className="h-8 text-center text-xs"
-          disabled={isCompleted}
-        />
+          className="h-8 text-center text-xs px-1"
+          disabled={!isEditable}
+        >
+          <option value="">RPE</option>
+          {RPE_OPTIONS.filter((option) => option !== "").map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </Select>
       )}
 
       {/* RIR (optional, alternative to RPE) */}
@@ -245,7 +264,7 @@ export function SetRow({
           onBlur={handleBlur}
           placeholder="RIR"
           className="h-8 text-center text-xs"
-          disabled={isCompleted}
+          disabled={!isEditable}
         />
       )}
 
@@ -260,6 +279,16 @@ export function SetRow({
         >
           Done
         </Button>
+      ) : isEditingCompleted ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handleSaveEdits}
+          className="h-8 px-3 text-[10px] font-black uppercase tracking-widest"
+        >
+          Save
+        </Button>
       ) : (
         <div className="h-8 w-8 flex items-center justify-center">
           {isPR ? (
@@ -271,7 +300,7 @@ export function SetRow({
       )}
 
       {/* Delete Button */}
-      {!isCompleted && (
+      {!isCompleted ? (
         <button
           type="button"
           onClick={onDelete}
@@ -279,6 +308,26 @@ export function SetRow({
         >
           ×
         </button>
+      ) : isEditingCompleted ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={handleCancelEdits}
+          className="h-8 px-2 text-[10px] font-black uppercase tracking-widest"
+        >
+          Cancel
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => setIsEditingCompleted(true)}
+          className="h-8 px-2 text-[10px] font-black uppercase tracking-widest"
+        >
+          Edit
+        </Button>
       )}
     </div>
   );

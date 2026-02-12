@@ -1,16 +1,7 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState, Suspense } from "react";
-import { 
-  ChevronRight, 
-  Search,
-  History,
-  Flame,
-  Beef,
-  Droplets,
-  CircleDot
-} from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
@@ -26,11 +17,62 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { Id } from "convex/_generated/dataModel";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
+type FoodSource = "manual" | "usda" | "open_food_facts" | "imported";
+
+interface FoodLogItem {
+  _id: string;
+  name: string;
+  mealType: MealType;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber?: number;
+  portionSize: string;
+  source?: FoodSource;
+  sourceConfidence?: number;
+}
+
+interface FavoriteFoodItem {
+  _id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber?: number;
+  portionSize: string;
+}
+
+interface BarcodeCandidate {
+  _id: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber?: number;
+  servingSize: number;
+  servingUnit: string;
+  source: FoodSource;
+  barcode?: string;
+}
+
+interface BarcodeLookupResult {
+  confidence: number;
+  candidates: BarcodeCandidate[];
+}
+
+interface DailyGoals {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
 
 const springTransition = {
   type: "spring" as const,
@@ -47,19 +89,27 @@ function FoodContent() {
   const { selectedDate, isToday, getLogTimestamp } = useActiveDate();
 
   // Convex Queries
-  const foods = useQuery(
+  const foods = (useQuery(
     api.foods.getByDateRange,
     userId ? { 
       userId, 
       startDate: new Date(selectedDate).setHours(0,0,0,0),
       endDate: new Date(selectedDate).setHours(23,59,59,999)
     } : "skip"
-  ) || [];
+  ) || []) as FoodLogItem[];
   
   const dailyGoalQuery = useQuery(
     api.stats.getTodayStats,
     userId ? { userId, date: selectedDate.getTime() } : "skip"
-  ) as any;
+  ) as { goals?: DailyGoals } | undefined;
+  const recentFoodsRaw = useQuery(
+    api.foods.getRecent,
+    userId ? { userId, limit: 20 } : "skip"
+  );
+  const favoriteFoodsRaw = useQuery(
+    api.favorites.getFoodFavorites,
+    userId ? { userId } : "skip"
+  );
 
   const goals = dailyGoalQuery?.goals || {
     calories: 2000,
@@ -71,8 +121,10 @@ function FoodContent() {
   // Convex Mutations
   const addFood = useMutation(api.foods.add);
   const removeFood = useMutation(api.foods.remove);
+  const seedPackagedFoods = useMutation(api.foodCatalog.seedPackagedFoods);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [barcodeInput, setBarcodeInput] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     mealType: "lunch" as MealType,
@@ -84,6 +136,12 @@ function FoodContent() {
     portionSize: "1 serving",
     notes: "",
   });
+  const barcodeLookup = useQuery(
+    api.foodCatalog.lookupByBarcode,
+    barcodeInput.trim().length > 3 ? { barcode: barcodeInput.trim() } : "skip"
+  ) as BarcodeLookupResult | undefined;
+  const recentFoods = (recentFoodsRaw || []) as FoodLogItem[];
+  const favoriteFoods = (favoriteFoodsRaw || []) as FavoriteFoodItem[];
 
   const totalNutrition = foods.reduce(
     (acc: { calories: number; protein: number; carbs: number; fat: number }, food: { calories: number; protein: number; carbs: number; fat: number }) => ({
@@ -117,9 +175,35 @@ function FoodContent() {
       portionSize: formData.portionSize,
       notes: formData.notes || undefined,
       consumedAt: getLogTimestamp(),
+      source: "manual" as FoodSource,
+      barcode: barcodeInput || undefined,
     });
     setIsDialogOpen(false);
     resetForm();
+  };
+
+  const handleAddFromCatalog = async (item: BarcodeCandidate) => {
+    if (!userId) return;
+    await addFood({
+      userId,
+      name: item.name,
+      mealType: formData.mealType,
+      calories: item.calories,
+      protein: item.protein,
+      carbs: item.carbs,
+      fat: item.fat,
+      fiber: item.fiber,
+      portionSize: `${item.servingSize}${item.servingUnit}`,
+      consumedAt: getLogTimestamp(),
+      source: item.source,
+      foodItemId: item._id as Id<"foodItems">,
+      barcode: item.barcode,
+      sourceConfidence: barcodeLookup?.confidence ?? 0.8,
+    });
+  };
+
+  const handleSeedFoods = async () => {
+    await seedPackagedFoods({});
   };
 
   const resetForm = () => {
@@ -200,6 +284,77 @@ function FoodContent() {
         </Button>
       </motion.div>
 
+      <Card className="border-border/40 bg-zinc-950/50">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Quick Add: Favorites & Recents</h3>
+            <Button variant="ghost" size="sm" onClick={handleSeedFoods}>
+              Seed Packaged Foods
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {favoriteFoods.slice(0, 6).map((food) => (
+              <Button
+                key={food._id}
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  addFood({
+                    userId: userId!,
+                    name: food.name,
+                    mealType: formData.mealType,
+                    calories: food.calories,
+                    protein: food.protein,
+                    carbs: food.carbs,
+                    fat: food.fat,
+                    fiber: food.fiber,
+                    portionSize: food.portionSize,
+                    consumedAt: getLogTimestamp(),
+                    source: "manual" as FoodSource,
+                  })
+                }
+                className="text-xs"
+              >
+                {food.name}
+              </Button>
+            ))}
+            {favoriteFoods.length === 0 && (
+              <p className="text-xs text-zinc-500">No favorites yet. Entries will appear here automatically.</p>
+            )}
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-zinc-500 uppercase tracking-wider">Recent meals</p>
+            <div className="flex flex-wrap gap-2">
+              {recentFoods.slice(0, 6).map((food) => (
+                <Button
+                  key={food._id}
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    addFood({
+                      userId: userId!,
+                      name: food.name,
+                      mealType: formData.mealType,
+                      calories: food.calories,
+                      protein: food.protein,
+                      carbs: food.carbs,
+                      fat: food.fat,
+                      fiber: food.fiber,
+                      portionSize: food.portionSize,
+                      consumedAt: getLogTimestamp(),
+                      source: (food.source ?? "manual") as FoodSource,
+                    })
+                  }
+                  className="text-xs"
+                >
+                  Repeat {food.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Meal Sections */}
       <div className="space-y-4">
         {MEAL_TYPES.map((type) => (
@@ -223,7 +378,7 @@ function FoodContent() {
                   <span className="text-xs font-bold text-zinc-700 uppercase tracking-widest">Log {type}</span>
                 </div>
               ) : (
-                mealGroups[type].map((food: { _id: string; name: string; portionSize: string; protein: number; carbs: number; fat: number; calories: number }) => (
+                mealGroups[type].map((food) => (
                   <motion.div
                     key={food._id}
                     layoutId={food._id}
@@ -235,6 +390,12 @@ function FoodContent() {
                         <p className="text-xs text-zinc-500 font-medium">
                           {food.portionSize} · P: {food.protein}g · C: {food.carbs}g · F: {food.fat}g
                         </p>
+                        {food.source && (
+                          <p className="text-[10px] text-zinc-600 uppercase tracking-wider mt-1">
+                            Source: {food.source.replace("_", " ")}
+                            {food.sourceConfidence !== undefined && ` · ${(food.sourceConfidence * 100).toFixed(0)}%`}
+                          </p>
+                        )}
                       </div>
                     </div>
                     
@@ -262,6 +423,59 @@ function FoodContent() {
             <DialogTitle className="text-xl font-bold">Log Food</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
+                Barcode
+              </Label>
+              <Input
+                value={barcodeInput}
+                onChange={(e) => setBarcodeInput(e.target.value)}
+                placeholder="Scan or enter barcode"
+                className="h-12 rounded-xl bg-zinc-900 border-0 focus-visible:ring-1 focus-visible:ring-white/20"
+              />
+              {barcodeLookup?.candidates?.length ? (
+                <div className="space-y-2 pt-2">
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-wider">
+                    Barcode matches ({(barcodeLookup.confidence * 100).toFixed(0)}% confidence)
+                  </p>
+                  {barcodeLookup.candidates.slice(0, 3).map((candidate) => (
+                    <button
+                      key={candidate._id}
+                      type="button"
+                      className="w-full text-left rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 hover:border-zinc-600"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: candidate.name,
+                          calories: String(candidate.calories),
+                          protein: String(candidate.protein),
+                          carbs: String(candidate.carbs),
+                          fat: String(candidate.fat),
+                          fiber: candidate.fiber ? String(candidate.fiber) : "",
+                          portionSize: `${candidate.servingSize}${candidate.servingUnit}`,
+                        }));
+                      }}
+                    >
+                      <p className="text-sm font-semibold text-zinc-100">
+                        {candidate.name}
+                      </p>
+                      <p className="text-xs text-zinc-500">
+                        {candidate.calories} kcal · P {candidate.protein} · C {candidate.carbs} · F {candidate.fat}
+                      </p>
+                    </button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => handleAddFromCatalog(barcodeLookup.candidates[0])}
+                  >
+                    Quick Add Best Match
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+
             <div className="space-y-1.5">
               <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Food Name</Label>
               <Input

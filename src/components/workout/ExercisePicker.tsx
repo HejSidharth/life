@@ -46,6 +46,8 @@ const CATEGORIES: { value: ExerciseCategory | "all"; label: string }[] = [
   { value: "flexibility", label: "Flexibility" },
 ];
 
+const DIFFICULTY_LEVELS = ["all", "beginner", "intermediate", "advanced"] as const;
+
 export function ExercisePicker({
   open,
   onOpenChange,
@@ -57,6 +59,10 @@ export function ExercisePicker({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMuscle, setSelectedMuscle] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState<ExerciseCategory | "all">("all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<
+    (typeof DIFFICULTY_LEVELS)[number]
+  >("all");
+  const [selectedEquipment, setSelectedEquipment] = useState("all");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus input when dialog opens
@@ -73,6 +79,8 @@ export function ExercisePicker({
       setSearchQuery("");
       setSelectedMuscle("All");
       setSelectedCategory("all");
+      setSelectedDifficulty("all");
+      setSelectedEquipment("all");
     }
   };
 
@@ -103,8 +111,34 @@ export function ExercisePicker({
       }
     }
 
+    if (selectedDifficulty !== "all") {
+      // Backward-compat: legacy seeded exercises may not yet have a difficulty tier.
+      const difficultyTier = exercise.difficultyTier ?? "beginner";
+      if (difficultyTier !== selectedDifficulty) {
+        return false;
+      }
+    }
+
+    if (
+      selectedEquipment !== "all" &&
+      exercise.equipment?.toLowerCase() !== selectedEquipment
+    ) {
+      return false;
+    }
+
     return true;
   });
+
+  const equipmentOptions = [
+    "all",
+    ...Array.from(
+      new Set(
+        exercises
+          .map((exercise) => exercise.equipment?.toLowerCase())
+          .filter((equipment): equipment is string => Boolean(equipment))
+      )
+    ).sort(),
+  ];
 
   // Group by first letter for alphabetical sections
   const groupedExercises = filteredExercises.reduce((acc, exercise) => {
@@ -186,6 +220,42 @@ export function ExercisePicker({
                   )}
                 >
                   {muscle}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+              {DIFFICULTY_LEVELS.map((difficulty) => (
+                <button
+                  key={difficulty}
+                  type="button"
+                  onClick={() => setSelectedDifficulty(difficulty)}
+                  className={cn(
+                    "px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl border transition-all whitespace-nowrap",
+                    selectedDifficulty === difficulty
+                      ? "bg-zinc-200 text-black border-zinc-200"
+                      : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-700 hover:text-zinc-300"
+                  )}
+                >
+                  {difficulty}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+              {equipmentOptions.map((equipment) => (
+                <button
+                  key={equipment}
+                  type="button"
+                  onClick={() => setSelectedEquipment(equipment)}
+                  className={cn(
+                    "px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl border transition-all whitespace-nowrap",
+                    selectedEquipment === equipment
+                      ? "bg-zinc-200 text-black border-zinc-200"
+                      : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-700 hover:text-zinc-300"
+                  )}
+                >
+                  {equipment}
                 </button>
               ))}
             </div>

@@ -63,7 +63,8 @@ export function RestTimer({
   return (
     <div
       className={cn(
-        "fixed bottom-4 left-1/2 -translate-x-1/2 z-50",
+        "fixed left-1/2 -translate-x-1/2 z-[70]",
+        "bottom-28 sm:bottom-24 md:bottom-4",
         "bg-card border border-border rounded-lg shadow-lg",
         "px-4 py-3 flex items-center gap-4",
         className

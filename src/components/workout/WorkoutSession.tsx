@@ -39,14 +39,11 @@ interface WorkoutSessionProps {
   onCancelWorkout: () => Promise<void>;
   onSaveAsTemplate?: () => void;
   isLoadingExercises?: boolean;
-  onSetExerciseSuperset?: (
-    workoutExerciseId: string,
-    supersetGroup: number | null
-  ) => Promise<void>;
   onViewExerciseHistory?: (
     exerciseLibraryId: string,
     exerciseName: string
   ) => void;
+  onViewExerciseTechnique?: (url: string) => void;
 }
 
 export function WorkoutSession({
@@ -63,8 +60,8 @@ export function WorkoutSession({
   onCancelWorkout,
   onSaveAsTemplate,
   isLoadingExercises,
-  onSetExerciseSuperset,
   onViewExerciseHistory,
+  onViewExerciseTechnique,
 }: WorkoutSessionProps) {
   const [isExercisePickerOpen, setIsExercisePickerOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -214,11 +211,6 @@ export function WorkoutSession({
             onDeleteSet={onDeleteSet}
             onRemoveExercise={() => onRemoveExercise(exercise._id)}
             onStartRest={startRest}
-            onSupersetGroupChange={
-              onSetExerciseSuperset
-                ? (group) => onSetExerciseSuperset(exercise._id, group)
-                : undefined
-            }
             onViewHistory={
               onViewExerciseHistory
                 ? () =>
@@ -228,6 +220,7 @@ export function WorkoutSession({
                     )
                 : undefined
             }
+            onViewTechnique={onViewExerciseTechnique}
             supersetLabel={
               exercise.supersetGroup
                 ? `Superset ${exercise.supersetGroup}`

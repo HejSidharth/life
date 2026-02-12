@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
 import { SetRow } from "./SetRow";
 import { WorkoutExercise, WorkoutSet, calculateVolume } from "@/types/workout";
 
@@ -16,7 +15,7 @@ interface ExerciseCardProps {
   onRemoveExercise: () => void;
   onStartRest: (seconds: number) => void;
   onViewHistory?: () => void;
-  onSupersetGroupChange?: (group: number | null) => void;
+  onViewTechnique?: (url: string) => void;
   previousPerformance?: {
     sets: { weight?: number; reps?: number }[];
   };
@@ -24,7 +23,6 @@ interface ExerciseCardProps {
   onToggleExpand?: () => void;
   supersetLabel?: string;
   defaultRestSeconds?: number;
-  maxSupersetGroups?: number;
 }
 
 export function ExerciseCard({
@@ -36,13 +34,12 @@ export function ExerciseCard({
   onRemoveExercise,
   onStartRest,
   onViewHistory,
-  onSupersetGroupChange,
+  onViewTechnique,
   previousPerformance,
   isExpanded = true,
   onToggleExpand,
   supersetLabel,
   defaultRestSeconds = 90,
-  maxSupersetGroups = 6,
 }: ExerciseCardProps) {
   const [isRemoving, setIsRemoving] = useState(false);
 
@@ -86,6 +83,7 @@ export function ExerciseCard({
               {!isExpanded && (
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {completedSets.length}/{exercise.sets.length} sets
+                  {exercise.difficultyTier && ` · ${exercise.difficultyTier}`}
                   {totalVolume > 0 && ` · ${totalVolume.toLocaleString()} vol`}
                   {prSets.length > 0 && (
                     <span className="text-white ml-1 font-bold">
@@ -107,6 +105,17 @@ export function ExerciseCard({
                 title="View history"
               >
                 History
+              </Button>
+            )}
+            {exercise.techniqueUrl && onViewTechnique && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onViewTechnique(exercise.techniqueUrl as string)}
+                className="h-8 px-2 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white"
+                title="View technique"
+              >
+                Technique
               </Button>
             )}
             <Button
@@ -153,7 +162,6 @@ export function ExerciseCard({
                 weightUnit={set.weightUnit}
                 isCompleted={set.isCompleted}
                 isPR={set.isPR}
-                prType={set.prType}
                 previousWeight={previousPerformance?.sets[index]?.weight}
                 previousReps={previousPerformance?.sets[index]?.reps}
                 onComplete={(data) => handleCompleteSet(set._id, data)}

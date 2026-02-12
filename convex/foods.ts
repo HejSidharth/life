@@ -58,9 +58,57 @@ export const add = mutation({
     portionSize: v.string(),
     notes: v.optional(v.string()),
     consumedAt: v.number(),
+    foodItemId: v.optional(v.id("foodItems")),
+    source: v.optional(
+      v.union(
+        v.literal("manual"),
+        v.literal("usda"),
+        v.literal("open_food_facts"),
+        v.literal("imported")
+      )
+    ),
+    sourceConfidence: v.optional(v.number()),
+    barcode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("foods", args);
+    const id = await ctx.db.insert("foods", args);
+
+    const favorites = await ctx.db
+      .query("foodFavorites")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const existingFavorite = favorites.find(
+      (favorite) => favorite.name.toLowerCase() === args.name.toLowerCase()
+    );
+
+    if (existingFavorite) {
+      await ctx.db.patch(existingFavorite._id, {
+        calories: args.calories,
+        protein: args.protein,
+        carbs: args.carbs,
+        fat: args.fat,
+        fiber: args.fiber,
+        portionSize: args.portionSize,
+        useCount: existingFavorite.useCount + 1,
+        lastUsedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("foodFavorites", {
+        userId: args.userId,
+        name: args.name,
+        calories: args.calories,
+        protein: args.protein,
+        carbs: args.carbs,
+        fat: args.fat,
+        fiber: args.fiber,
+        portionSize: args.portionSize,
+        useCount: 1,
+        lastUsedAt: Date.now(),
+      });
+    }
+
+    return id;
   },
 });
 
@@ -97,5 +145,20 @@ export const remove = mutation({
   args: { id: v.id("foods") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.id);
+  },
+});
+
+export const getRecent = query({
+  args: {
+    userId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 20;
+    return await ctx.db
+      .query("foods")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(limit);
   },
 });

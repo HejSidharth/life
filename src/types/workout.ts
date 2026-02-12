@@ -22,6 +22,12 @@ export interface ExerciseLibraryItem {
   instructions?: string[];
   isBuiltIn: boolean;
   userId?: string;
+  movementPattern?: string;
+  difficultyTier?: "beginner" | "intermediate" | "advanced";
+  contraindicationTags?: string[];
+  variationKey?: string;
+  techniqueUrl?: string;
+  techniqueSource?: string;
 }
 
 export interface WorkoutSet {
@@ -52,6 +58,10 @@ export interface WorkoutExercise {
   supersetGroup?: number;
   notes?: string;
   restSeconds?: number;
+  exerciseVariantId?: string;
+  movementPattern?: string;
+  difficultyTier?: "beginner" | "intermediate" | "advanced";
+  techniqueUrl?: string;
   sets: WorkoutSet[];
 }
 
@@ -65,7 +75,118 @@ export interface Workout {
   duration?: number;
   notes?: string;
   templateId?: string;
+  planDayId?: string;
+  gymProfileId?: string;
   exercises: WorkoutExercise[];
+}
+
+export interface ExerciseFamily {
+  _id: string;
+  name: string;
+  slug: string;
+  movementPatternKey: string;
+  primaryMuscles: string[];
+  secondaryMuscles?: string[];
+}
+
+export interface ExerciseVariant {
+  _id: string;
+  familyId: string;
+  name: string;
+  slug: string;
+  equipmentKey: string;
+  category: ExerciseCategory;
+  difficultyTier: "beginner" | "intermediate" | "advanced";
+  contraindicationTags: string[];
+  cueNotes?: string[];
+}
+
+export interface TechniqueMedia {
+  _id: string;
+  exerciseVariantId: string;
+  youtubeUrl: string;
+  sourceName: string;
+  difficulty?: string;
+  cueNotes?: string[];
+  isPrimary: boolean;
+}
+
+export interface PlanDayPrescription {
+  _id: string;
+  planDayId: string;
+  order: number;
+  exerciseVariantId?: string;
+  exerciseLibraryId?: string;
+  targetSets: number;
+  targetReps: string;
+  targetRir?: number;
+  restSeconds?: number;
+  notes?: string;
+}
+
+export interface PlanTemplate {
+  _id: string;
+  name: string;
+  slug: string;
+  goal: "strength" | "hypertrophy" | "general_fitness";
+  experienceLevel: "beginner" | "intermediate" | "advanced";
+  daysPerWeek: number;
+  sessionMinutes: number;
+  description?: string;
+}
+
+export interface PlanInstance {
+  _id: string;
+  userId: string;
+  planTemplateId: string;
+  gymProfileId?: string;
+  startDate: number;
+  status: "active" | "completed" | "paused" | "cancelled";
+  goal: "strength" | "hypertrophy" | "general_fitness";
+  daysPerWeek: number;
+  sessionMinutes: number;
+}
+
+export interface ProgressionDecision {
+  progressionDecision: "increase" | "hold" | "reduce";
+  decisionReason: string;
+}
+
+export interface GymProfile {
+  _id: string;
+  userId: string;
+  name: string;
+  isDefault: boolean;
+  notes?: string;
+  equipment: {
+    _id: string;
+    gymProfileId: string;
+    equipmentKey: string;
+    maxLoad?: number;
+    notes?: string;
+  }[];
+}
+
+export interface PackagedFoodItem {
+  _id: string;
+  name: string;
+  brand?: string;
+  barcode?: string;
+  source: "manual" | "usda" | "open_food_facts" | "imported";
+  servingSize: number;
+  servingUnit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber?: number;
+  isVerified: boolean;
+}
+
+export interface FoodProvenance {
+  source: "manual" | "usda" | "open_food_facts" | "imported";
+  confidence?: number;
+  barcode?: string;
 }
 
 export interface WorkoutTemplate {

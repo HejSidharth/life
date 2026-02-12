@@ -12,6 +12,8 @@ export const startWorkout = mutation({
     name: v.optional(v.string()),
     templateId: v.optional(v.string()),
     startedAt: v.optional(v.number()),
+    planDayId: v.optional(v.id("planDays")),
+    gymProfileId: v.optional(v.id("gymProfiles")),
   },
   handler: async (ctx, args) => {
     // Check if user has an in-progress workout
@@ -32,6 +34,8 @@ export const startWorkout = mutation({
       status: "in_progress",
       startedAt: args.startedAt || Date.now(),
       templateId: args.templateId,
+      planDayId: args.planDayId,
+      gymProfileId: args.gymProfileId,
     });
 
     return { workoutId };
@@ -71,7 +75,17 @@ export const getActiveWorkout = query({
         // Sort sets by set number
         sets.sort((a, b) => a.setNumber - b.setNumber);
 
-        return { ...exercise, sets };
+        const exerciseDefinition = await ctx.db.get(exercise.exerciseLibraryId);
+
+        return {
+          ...exercise,
+          sets,
+          movementPattern:
+            exercise.movementPattern ?? exerciseDefinition?.movementPattern,
+          difficultyTier:
+            exercise.difficultyTier ?? exerciseDefinition?.difficultyTier,
+          techniqueUrl: exercise.techniqueUrl ?? exerciseDefinition?.techniqueUrl,
+        };
       })
     );
 
@@ -98,7 +112,40 @@ export const completeWorkout = mutation({
       duration,
     });
 
-    return { duration };
+    const sets = await ctx.db
+      .query("exerciseSets")
+      .withIndex("by_workout", (q) => q.eq("workoutId", args.workoutId))
+      .collect();
+
+    const completedSets = sets.filter((set) => set.isCompleted);
+    const completionRate =
+      sets.length === 0 ? 0 : Math.round((completedSets.length / sets.length) * 100);
+    const avgRir =
+      completedSets.length === 0
+        ? undefined
+        : completedSets.reduce((sum, set) => sum + (set.rir ?? 0), 0) /
+          completedSets.length;
+
+    const progressionDecision =
+      completionRate >= 90 && (avgRir ?? 2) >= 1
+        ? "increase"
+        : completionRate < 70
+          ? "reduce"
+          : "hold";
+
+    const decisionReason =
+      progressionDecision === "increase"
+        ? "High completion and controlled effort."
+        : progressionDecision === "reduce"
+          ? "Low completion rate, prioritize consistency."
+          : "Keep load stable and reinforce execution.";
+
+    return {
+      duration,
+      progressionDecision,
+      decisionReason,
+      completionRate,
+    };
   },
 });
 
@@ -136,6 +183,7 @@ export const addExerciseToWorkout = mutation({
     exerciseLibraryId: v.id("exerciseLibrary"),
     supersetGroup: v.optional(v.number()),
     restSeconds: v.optional(v.number()),
+    exerciseVariantId: v.optional(v.id("exerciseVariants")),
   },
   handler: async (ctx, args) => {
     // Get the exercise details
@@ -158,6 +206,10 @@ export const addExerciseToWorkout = mutation({
       order,
       supersetGroup: args.supersetGroup,
       restSeconds: args.restSeconds || 90,
+      exerciseVariantId: args.exerciseVariantId,
+      movementPattern: exercise.movementPattern,
+      difficultyTier: exercise.difficultyTier,
+      techniqueUrl: exercise.techniqueUrl,
       createdAt: Date.now(),
     });
 

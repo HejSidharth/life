@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { useState, useMemo, Suspense } from "react";
+import { motion } from "framer-motion";
+import { useEffect, useState, Suspense } from "react";
 import { 
   ChevronRight
 } from "lucide-react";
@@ -16,11 +16,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { WorkoutSession } from "@/components/workout/WorkoutSession";
-import { ExerciseLibraryItem, Workout, WorkoutTemplate } from "@/types/workout";
+import { ExerciseLibraryItem, Workout } from "@/types/workout";
 import { format } from "date-fns";
 import type { Id } from "convex/_generated/dataModel";
 
@@ -49,6 +48,39 @@ const itemVariants = {
   },
 };
 
+interface AdherenceStats {
+  plannedCount: number;
+  completedCount: number;
+  adherenceRate: number;
+}
+
+interface GymProfileSummary {
+  _id: string;
+  isDefault: boolean;
+}
+
+interface PlanPrescriptionSummary {
+  _id: string;
+  exerciseName: string;
+  targetSets: number;
+  targetReps: string;
+}
+
+interface PlanSummary {
+  hasSession: boolean;
+  progressId?: string;
+  planDayId?: string;
+  dayName?: string;
+  focus?: string;
+  estimatedMinutes?: number;
+  prescriptions: PlanPrescriptionSummary[];
+}
+
+interface WorkoutCompletionResult {
+  progressionDecision: "increase" | "hold" | "reduce";
+  decisionReason: string;
+}
+
 function ExerciseContent() {
   const { user } = useUser();
   const userId = user?.id;
@@ -71,6 +103,22 @@ function ExerciseContent() {
     userId ? { userId, limit: 10 } : "skip"
   );
 
+  const todayPlanSummary = useQuery(
+    api.plans.getTodayPlanSummary,
+    userId ? { userId, date: selectedDate.getTime() } : "skip"
+  );
+
+  const adherence = useQuery(
+    api.plans.getAdherence,
+    userId ? { userId } : "skip"
+  );
+
+  const catalogStats = useQuery(api.exerciseCatalog.getCatalogStats, {});
+  const gymProfilesRaw = useQuery(
+    api.gymProfiles.getForUser,
+    userId ? { userId } : "skip"
+  );
+
   const exerciseLibraryRaw = useQuery(api.exerciseLibrary.getExercises, {});
   const exerciseLibrary = exerciseLibraryRaw || [];
   const isLoadingLibrary = exerciseLibraryRaw === undefined;
@@ -87,13 +135,59 @@ function ExerciseContent() {
   const updateSet = useMutation(api.workouts.updateSet);
   const completeSet = useMutation(api.workouts.completeSet);
   const deleteSet = useMutation(api.workouts.deleteSet);
+  const markDayCompleted = useMutation(api.plans.markDayCompleted);
+  const createDefaultPlan = useMutation(api.plans.createDefaultPlanForUser);
+  const createStarterProfile = useMutation(api.gymProfiles.createStarterProfile);
+  const seedCatalog = useMutation(api.exerciseCatalog.seedCatalog);
+  const seedPlanTemplates = useMutation(api.planTemplates.seedPlanTemplates);
+  const seedFoodItems = useMutation(api.foodCatalog.seedPackagedFoods);
+  const seedLegacyExerciseLibrary = useMutation(
+    api.exerciseLibrary.seedExerciseLibrary
+  );
 
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const [showPlanSetupDialog, setShowPlanSetupDialog] = useState(false);
   const [newWorkoutName, setNewWorkoutName] = useState("");
+  const [planGoal, setPlanGoal] = useState<"strength" | "hypertrophy" | "general_fitness">("hypertrophy");
+  const [planLevel, setPlanLevel] = useState<"beginner" | "intermediate" | "advanced">("intermediate");
+  const [planDays, setPlanDays] = useState("4");
+  const [isBootstrapping, setIsBootstrapping] = useState(false);
+  const [hasAutoSeededLibrary, setHasAutoSeededLibrary] = useState(false);
 
-  const activeWorkout = activeWorkoutRaw as any;
-  const templates = (templatesRaw as any[]) || [];
-  const recentWorkouts = (recentWorkoutsRaw as any[]) || [];
+  const activeWorkout = activeWorkoutRaw as Workout | null;
+  const templates = (templatesRaw || []) as {
+    _id: string;
+    name: string;
+    exercises: unknown[];
+  }[];
+  const recentWorkouts = (recentWorkoutsRaw || []) as {
+    _id: string;
+    name: string;
+    completedAt: number;
+    duration: number;
+    totalVolume: number;
+    exerciseCount: number;
+  }[];
+  const planSummary = todayPlanSummary as PlanSummary | null;
+  const profileList = (gymProfilesRaw || []) as GymProfileSummary[];
+  const defaultProfile = profileList.find((profile) => profile.isDefault);
+  const adherenceStats = adherence as AdherenceStats | undefined;
+
+  useEffect(() => {
+    if (!userId || hasAutoSeededLibrary || exerciseLibraryRaw === undefined) {
+      return;
+    }
+
+    if ((exerciseLibraryRaw as ExerciseLibraryItem[]).length === 0) {
+      setHasAutoSeededLibrary(true);
+      void seedLegacyExerciseLibrary({});
+    }
+  }, [
+    userId,
+    hasAutoSeededLibrary,
+    exerciseLibraryRaw,
+    seedLegacyExerciseLibrary,
+  ]);
 
   const handleStartEmptyWorkout = async () => {
     if (!userId) return;
@@ -101,6 +195,8 @@ function ExerciseContent() {
       userId,
       name: newWorkoutName || "Workout",
       startedAt: getLogTimestamp(),
+      planDayId: planSummary?.planDayId as Id<"planDays"> | undefined,
+      gymProfileId: defaultProfile?._id as Id<"gymProfiles"> | undefined,
     });
     setShowStartDialog(false);
     setNewWorkoutName("");
@@ -112,6 +208,34 @@ function ExerciseContent() {
       templateId: templateId as Id<"workoutTemplates">,
       userId,
     });
+  };
+
+  const handleBootstrapDepthData = async () => {
+    if (!userId || isBootstrapping) return;
+    setIsBootstrapping(true);
+    try {
+      await seedCatalog({});
+      await seedPlanTemplates({});
+      await seedFoodItems({});
+      await createStarterProfile({ userId });
+    } finally {
+      setIsBootstrapping(false);
+    }
+  };
+
+  const handleCreatePlan = async () => {
+    if (!userId) return;
+    const ensuredProfile = defaultProfile
+      ? defaultProfile._id
+      : (await createStarterProfile({ userId })).profileId;
+    await createDefaultPlan({
+      userId,
+      goal: planGoal,
+      experienceLevel: planLevel,
+      daysPerWeek: parseInt(planDays, 10),
+      gymProfileId: ensuredProfile,
+    });
+    setShowPlanSetupDialog(false);
   };
 
   if (activeWorkout) {
@@ -163,11 +287,24 @@ function ExerciseContent() {
             }).then(() => {})
           }
           onCompleteWorkout={() => 
-            completeWorkout({ workoutId: activeWorkout._id as Id<"workouts"> }).then(() => {})
+            completeWorkout({ workoutId: activeWorkout._id as Id<"workouts"> }).then(async (result: WorkoutCompletionResult) => {
+              if (userId && planSummary?.progressId) {
+                await markDayCompleted({
+                  userId,
+                  progressId: planSummary.progressId as Id<"userPlanDayProgress">,
+                  workoutId: activeWorkout._id as Id<"workouts">,
+                  progressionDecision: result.progressionDecision,
+                  decisionReason: result.decisionReason,
+                });
+              }
+            })
           }
           onCancelWorkout={() => 
             cancelWorkout({ workoutId: activeWorkout._id as Id<"workouts"> }).then(() => {})
           }
+          onViewExerciseTechnique={(url) => {
+            window.open(url, "_blank", "noopener,noreferrer");
+          }}
         />
       </div>
     );
@@ -188,6 +325,85 @@ function ExerciseContent() {
           {isToday ? "Track your progress and hit new PRs." : format(selectedDate, "MMMM do, yyyy")}
         </p>
       </motion.div>
+
+      <Card className="border-border/40 bg-zinc-950/50">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Depth Status</h2>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBootstrapDepthData}
+              disabled={isBootstrapping}
+            >
+              {isBootstrapping ? "Seeding..." : "Initialize Catalog + Plans"}
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs uppercase tracking-wider">
+            <div>
+              <p className="text-zinc-500">Families</p>
+              <p className="font-bold text-zinc-100">{catalogStats?.familyCount ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-zinc-500">Variants</p>
+              <p className="font-bold text-zinc-100">{catalogStats?.variantCount ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-zinc-500">Plan Templates</p>
+              <p className="font-bold text-zinc-100">{catalogStats?.planTemplateCount ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-zinc-500">Technique Links</p>
+              <p className="font-bold text-zinc-100">{catalogStats?.techniqueMediaCount ?? 0}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {planSummary?.hasSession && (
+        <Card className="border-border/40 bg-zinc-950/50">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-semibold text-zinc-100">Today&apos;s Session: {planSummary.dayName}</h3>
+                <p className="text-xs text-zinc-500">
+                  {planSummary.focus} · {planSummary.estimatedMinutes} min · {planSummary.prescriptions.length} prescriptions
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowPlanSetupDialog(true)}>
+                Adjust Plan
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {planSummary.prescriptions.slice(0, 4).map((prescription) => (
+                <div key={prescription._id} className="flex items-center justify-between text-xs bg-zinc-900/60 rounded-xl px-3 py-2">
+                  <span className="text-zinc-200">{prescription.exerciseName}</span>
+                  <span className="text-zinc-500">
+                    {prescription.targetSets} x {prescription.targetReps}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="border-border/40 bg-zinc-950/50">
+        <CardContent className="p-4 flex items-center justify-between">
+          <div>
+            <p className="text-zinc-500 text-xs uppercase tracking-wider">Adherence</p>
+            <p className="text-xl font-bold text-zinc-100">
+              {adherenceStats?.adherenceRate ?? 0}%
+            </p>
+            <p className="text-xs text-zinc-500">
+              {adherenceStats?.completedCount ?? 0}/{adherenceStats?.plannedCount ?? 0} planned sessions completed
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => setShowPlanSetupDialog(true)}>
+            Plan Setup
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Start Workout Button */}
       <motion.div
@@ -356,6 +572,64 @@ function ExerciseContent() {
                 Start Workout
               </Button>
             </motion.div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPlanSetupDialog} onOpenChange={setShowPlanSetupDialog}>
+        <DialogContent className="rounded-3xl border-border bg-card shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Plan Setup</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
+                Goal
+              </label>
+              <select
+                className="h-12 w-full rounded-xl bg-zinc-900 border border-zinc-800 px-3 text-sm"
+                value={planGoal}
+                onChange={(event) =>
+                  setPlanGoal(event.target.value as "strength" | "hypertrophy" | "general_fitness")
+                }
+              >
+                <option value="strength">Strength</option>
+                <option value="hypertrophy">Hypertrophy</option>
+                <option value="general_fitness">General Fitness</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
+                Experience
+              </label>
+              <select
+                className="h-12 w-full rounded-xl bg-zinc-900 border border-zinc-800 px-3 text-sm"
+                value={planLevel}
+                onChange={(event) =>
+                  setPlanLevel(event.target.value as "beginner" | "intermediate" | "advanced")
+                }
+              >
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
+                Days / Week
+              </label>
+              <Input
+                type="number"
+                min={3}
+                max={6}
+                value={planDays}
+                onChange={(event) => setPlanDays(event.target.value)}
+                className="h-12 rounded-xl bg-zinc-900 border-zinc-800"
+              />
+            </div>
+            <Button onClick={handleCreatePlan} className="w-full h-12 rounded-xl">
+              Create Plan
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

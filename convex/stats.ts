@@ -54,21 +54,32 @@ export const getTodayStats = query({
     // Sum water (all beverages count toward hydration)
     const waterMl = todaysHydration.reduce((acc, h) => acc + h.amount, 0);
 
-    // Fetch today's exercises
-    const exercises = await ctx.db
+    // Fetch today's exercise entries (legacy + new workout sessions)
+    const legacyExercises = await ctx.db
       .query("exercises")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .collect();
 
-    const todaysExercises = exercises.filter(
+    const todaysLegacyExercises = legacyExercises.filter(
       (e) => e.performedAt >= start && e.performedAt <= end
     );
 
-    // Sum exercise duration
-    const exerciseMinutes = todaysExercises.reduce(
-      (acc, e) => acc + (e.duration || 0),
-      0
+    const workouts = await ctx.db
+      .query("workouts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const todaysWorkouts = workouts.filter(
+      (workout) =>
+        workout.startedAt >= start &&
+        workout.startedAt <= end &&
+        workout.status === "completed"
     );
+
+    // Sum exercise duration
+    const exerciseMinutes =
+      todaysLegacyExercises.reduce((acc, e) => acc + (e.duration || 0), 0) +
+      todaysWorkouts.reduce((acc, workout) => acc + (workout.duration || 0), 0);
 
     // Fetch user's goals
     const goals = await ctx.db
@@ -97,7 +108,7 @@ export const getTodayStats = query({
       },
       exercise: {
         minutes: exerciseMinutes,
-        count: todaysExercises.length,
+        count: todaysLegacyExercises.length + todaysWorkouts.length,
       },
       goals: {
         calories: goalsMap.calories || 2000,
@@ -126,9 +137,16 @@ export const getRecentActivity = query({
       .order("desc")
       .take(limit);
 
-    // Get recent exercises
+    // Get recent exercises (legacy)
     const exercises = await ctx.db
       .query("exercises")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(limit);
+
+    // Get recent workouts (new system)
+    const workouts = await ctx.db
+      .query("workouts")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .order("desc")
       .take(limit);
@@ -160,6 +178,14 @@ export const getRecentActivity = query({
         detail: `${h.amount} ml`,
         timestamp: h.consumedAt,
       })),
+      ...workouts
+        .filter((w) => w.status === "completed")
+        .map((w) => ({
+          type: "exercise" as const,
+          name: w.name || "Workout",
+          detail: `${w.duration || 0} min`,
+          timestamp: w.completedAt || w.startedAt,
+        })),
     ];
 
     // Sort by timestamp descending and take limit
@@ -183,7 +209,7 @@ export const getContributionHistory = query({
     const startTimestamp = startTime.getTime();
 
     // Fetch all entries since startTimestamp
-    const [foods, exercises, hydration] = await Promise.all([
+    const [foods, exercises, hydration, workouts] = await Promise.all([
       ctx.db
         .query("foods")
         .withIndex("by_user_date", (q) =>
@@ -202,6 +228,12 @@ export const getContributionHistory = query({
           q.eq("userId", args.userId).gte("consumedAt", startTimestamp)
         )
         .collect(),
+      ctx.db
+        .query("workouts")
+        .withIndex("by_user_date", (q) =>
+          q.eq("userId", args.userId).gte("startedAt", startTimestamp)
+        )
+        .collect(),
     ]);
 
     // Group counts by date string (YYYY-MM-DD)
@@ -215,8 +247,10 @@ export const getContributionHistory = query({
     foods.forEach((f) => addToCounts(f.consumedAt));
     exercises.forEach((e) => addToCounts(e.performedAt));
     hydration.forEach((h) => addToCounts(h.consumedAt));
+    workouts
+      .filter((workout) => workout.status === "completed")
+      .forEach((workout) => addToCounts(workout.startedAt));
 
     return counts;
   },
 });
-
