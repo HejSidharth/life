@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SetRow } from "./SetRow";
-import { WorkoutExercise, WorkoutSet, calculateVolume } from "@/types/workout";
+import { WorkoutExercise, WorkoutSet, calculateVolume, SetType } from "@/types/workout";
 
 interface ExerciseCardProps {
   exercise: WorkoutExercise;
@@ -12,6 +12,7 @@ interface ExerciseCardProps {
     weight?: number;
     reps?: number;
     rpe?: number;
+    setType?: SetType;
   }) => Promise<void>;
   onUpdateSet: (setId: string, data: Partial<WorkoutSet>) => void;
   onCompleteSet: (setId: string, data: { weight?: number; reps?: number; rpe?: number; rir?: number }) => Promise<{ isPR?: boolean; prType?: string }>;
@@ -195,7 +196,19 @@ export function ExerciseCard({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => void onAddSet()}
+            onClick={() => {
+              const lastSet = exercise.sets[exercise.sets.length - 1];
+              void onAddSet(
+                lastSet
+                  ? {
+                      weight: lastSet.weight,
+                      reps: lastSet.reps,
+                      rpe: lastSet.rpe,
+                      setType: lastSet.setType,
+                    }
+                  : undefined
+              );
+            }}
             className="w-full mt-3 h-10 rounded-2xl border-zinc-800 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white"
           >
             + Add Set
