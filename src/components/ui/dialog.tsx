@@ -82,7 +82,7 @@ export function DialogContent({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="fixed inset-0 bg-black/50"
+        className="fixed inset-0 bg-background/50"
         onClick={() => {
           if (closeOnOverlayClick) {
             onOpenChange(false);
@@ -91,7 +91,7 @@ export function DialogContent({
       />
       <div
         className={cn(
-          "relative z-50 w-full max-w-lg rounded-lg border border-border bg-card p-6 shadow-lg",
+          "relative z-50 w-full max-w-lg rounded-lg bg-card p-6 shadow-lg",
           "animate-in fade-in-0 zoom-in-95",
           className
         )}
