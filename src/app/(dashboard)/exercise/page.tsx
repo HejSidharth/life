@@ -24,7 +24,6 @@ import { RoutineWizard, RoutineData } from "@/components/workout/RoutineWizard";
 import { PlanSetupFlow, PlanSetupData } from "@/components/workout/PlanSetupFlow";
 import { NewWorkoutFlow } from "@/components/workout/NewWorkoutFlow";
 import { WorkoutStarterDialog } from "@/components/workout/WorkoutStarterDialog";
-import { WorkoutProgressHero } from "@/components/workout/WorkoutProgressHero";
 import { ExerciseLibraryItem, Workout } from "@/types/workout";
 import { MascotSceneHero } from "@/components/dashboard/MascotSceneHero";
 import { format } from "date-fns";
@@ -271,20 +270,42 @@ function ExerciseContent() {
 
   const handleStartEmptyWorkout = async (name: string) => {
     if (!userId) return;
-    await startWorkout({
-      userId,
-      name: name || "Workout",
-      startedAt: getLogTimestamp(),
-    });
-    setShowStartDialog(false);
+    try {
+      const result = (await startWorkout({
+        userId,
+        name: name || "Workout",
+        startedAt: getLogTimestamp(),
+      })) as { error?: string };
+
+      if (result?.error) {
+        console.error("Unable to start workout:", result.error);
+        window.alert(result.error);
+        return;
+      }
+
+      setShowStartDialog(false);
+    } catch (error) {
+      console.error("Failed to start workout:", error);
+      window.alert("Failed to start workout. Please try again.");
+    }
   };
 
   const handleStartTemplate = async (templateId: string) => {
     if (!userId) return;
-    await startFromTemplate({
-      templateId: templateId as Id<"workoutTemplates">,
-      userId,
-    });
+    try {
+      const result = (await startFromTemplate({
+        templateId: templateId as Id<"workoutTemplates">,
+        userId,
+      })) as { error?: string };
+
+      if (result?.error) {
+        console.error("Unable to start template workout:", result.error);
+        window.alert(result.error);
+      }
+    } catch (error) {
+      console.error("Failed to start workout from template:", error);
+      window.alert("Failed to start workout from template. Please try again.");
+    }
   };
 
 
@@ -431,15 +452,6 @@ function ExerciseContent() {
           </div>
         )}
       />
-
-      {/* Progress Hero (BitePal Style) */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05, ...springTransition }}
-      >
-        <WorkoutProgressHero recentWorkouts={recentWorkouts} />
-      </motion.div>
 
       {planSummary?.hasSession && (
         <section className="rounded-[1.75rem] border border-border bg-card p-4">
@@ -636,6 +648,7 @@ function ExerciseContent() {
           void handleStartTemplate(templateId);
         }}
         onStartFromScratch={() => {
+          setShowStarterDialog(false);
           setShowStartDialog(true);
         }}
       />

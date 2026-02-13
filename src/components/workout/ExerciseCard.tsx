@@ -68,7 +68,12 @@ export function ExerciseCard({
   };
 
   return (
-    <Card className={cn("relative", showMenu && "z-50")}>
+    <Card
+      className={cn(
+        "relative overflow-visible rounded-[2rem] border border-border bg-card",
+        showMenu && "z-50"
+      )}
+    >
       {/* Superset indicator */}
       {supersetLabel && (
         <div className="absolute top-0 left-0 bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-br rounded-tl-[inherit] z-10">
@@ -76,7 +81,7 @@ export function ExerciseCard({
         </div>
       )}
 
-      <CardHeader className="pb-2">
+      <CardHeader className="p-5 pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <button
@@ -84,7 +89,7 @@ export function ExerciseCard({
               onClick={onToggleExpand}
               className="text-left w-full group"
             >
-              <h3 className="font-semibold text-base group-hover:text-primary transition-colors truncate">
+              <h3 className="truncate text-5xl font-black tracking-tight text-foreground transition-opacity group-hover:opacity-80">
                 {exercise.exerciseName}
               </h3>
               {!isExpanded && (
@@ -106,7 +111,7 @@ export function ExerciseCard({
             <button
               type="button"
               onClick={() => setShowMenu(!showMenu)}
-              className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted"
+              className="h-9 w-9 flex items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-secondary hover:text-foreground"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <circle cx="8" cy="3" r="1.25" />
@@ -124,7 +129,7 @@ export function ExerciseCard({
                   onClick={() => setShowMenu(false)}
                   aria-label="Close menu"
                 />
-                <div className="absolute right-0 top-full mt-1 z-50 bg-secondary border border-border rounded-xl shadow-xl py-1 min-w-[140px]">
+                <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] rounded-xl border border-border bg-card py-1">
                   {onViewHistory && (
                     <button
                       type="button"
@@ -167,7 +172,7 @@ export function ExerciseCard({
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="pt-0 space-y-1">
+        <CardContent className="space-y-2 px-5 pb-5 pt-0">
           {/* Sets — no column header grid needed */}
           {exercise.sets.map((set, index) => (
             <SetRow
@@ -225,7 +230,7 @@ export function ExerciseCard({
 
           {/* Stats */}
           {completedSets.length > 0 && (
-            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+            <div className="mt-3 flex items-center gap-4 border-t border-border pt-3 text-xs font-semibold text-muted-foreground">
               <span>{completedSets.length} sets done</span>
               {totalVolume > 0 && <span>{totalVolume.toLocaleString()} vol</span>}
             </div>

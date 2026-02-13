@@ -8,12 +8,12 @@ import { ExerciseCard } from "./ExerciseCard";
 import { ExercisePicker } from "./ExercisePicker";
 import { RestTimer, useRestTimer } from "./RestTimer";
 import { WorkoutFinishFlow } from "./WorkoutFinishFlow";
+import { useWizard } from "@/context/WizardContext";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Workout,
@@ -84,6 +84,8 @@ export function WorkoutSession({
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [now, setNow] = useState(workout.startedAt);
   const [collapsedExercises, setCollapsedExercises] = useState<Set<string>>(new Set());
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const { setWizardOpen } = useWizard();
 
   const { restSeconds, timerKey, startRest, stopRest, isResting } = useRestTimer();
 
@@ -94,6 +96,11 @@ export function WorkoutSession({
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    setWizardOpen(true);
+    return () => setWizardOpen(false);
+  }, [setWizardOpen]);
 
   // Calculate workout stats
   const elapsedSeconds = Math.floor((now - workout.startedAt) / 1000);
@@ -113,6 +120,9 @@ export function WorkoutSession({
 
   const handleSelectExercise = async (exercise: ExerciseLibraryItem) => {
     await onAddExercise(exercise._id);
+    if (workout.exercises.length === 0) {
+      setCurrentExerciseIndex(0);
+    }
   };
 
   const handleSaveName = async () => {
@@ -139,18 +149,38 @@ export function WorkoutSession({
     setShowFinishDialog(false);
   };
 
+  const hasExercises = workout.exercises.length > 0;
+  const activeExerciseIndex = hasExercises
+    ? Math.min(currentExerciseIndex, workout.exercises.length - 1)
+    : 0;
+  const currentExercise = workout.exercises[activeExerciseIndex];
+  const isLastExercise = hasExercises && activeExerciseIndex === workout.exercises.length - 1;
+
+  const goToNextExercise = () => {
+    if (!hasExercises) return;
+    if (isLastExercise) {
+      setShowFinishDialog(true);
+      return;
+    }
+    setCurrentExerciseIndex((prev) => Math.min(prev + 1, workout.exercises.length - 1));
+  };
+
+  const goToPreviousExercise = () => {
+    setCurrentExerciseIndex((prev) => Math.max(prev - 1, 0));
+  };
+
   return (
-    <div className="space-y-4 pb-24">
+    <div className="flex min-h-[calc(100dvh-3.5rem)] flex-col gap-4 pb-2">
       {/* Workout Header */}
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
+      <Card className="rounded-[2rem] border border-border bg-card">
+        <CardHeader className="p-5 pb-3">
+          <div className="flex items-start justify-between gap-4">
             {isEditingName ? (
               <div className="flex items-center gap-2 flex-1">
                 <Input
                   value={workoutName}
                   onChange={(e) => setWorkoutName(e.target.value)}
-                  className="h-8 text-lg font-semibold"
+                  className="h-10 rounded-xl border-border bg-secondary text-xl font-black text-foreground"
                   autoFocus
                   onBlur={handleSaveName}
                   onKeyDown={(e) => {
@@ -166,27 +196,22 @@ export function WorkoutSession({
               <button
                 type="button"
                 onClick={() => setIsEditingName(true)}
-                className="text-lg font-semibold hover:text-primary transition-colors"
+                className="text-3xl font-black tracking-tight text-foreground transition-colors hover:opacity-80"
               >
                 {workout.name || "Workout"}
               </button>
             )}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowCancelDialog(true)}
-              >
-                Cancel
-              </Button>
-              <Button size="sm" onClick={() => setShowFinishDialog(true)}>
-                Finish
-              </Button>
-            </div>
+            <Button
+              size="sm"
+              onClick={() => setShowFinishDialog(true)}
+              className="h-11 rounded-full px-6 text-base font-black"
+            >
+              Finish
+            </Button>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+        <CardContent className="px-5 pb-5 pt-0">
+          <div className="flex flex-wrap items-center gap-4 text-xs font-black uppercase tracking-[0.18em] text-muted-foreground">
             <div className="flex items-center gap-1">
               <span>{formatDuration(elapsedSeconds)}</span>
             </div>
@@ -207,60 +232,89 @@ export function WorkoutSession({
                 {prCount} PR{prCount !== 1 ? "s" : ""}
               </div>
             )}
+            <div>
+              <span className="text-foreground">{hasExercises ? activeExerciseIndex + 1 : 0}</span>
+              /{workout.exercises.length} exercise
+              {workout.exercises.length !== 1 ? "s" : ""}
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Exercise List */}
-      <div className="space-y-4">
-        {workout.exercises.map((exercise) => (
+      {/* Current Exercise */}
+      <div className="flex-1 space-y-4">
+        {hasExercises && currentExercise ? (
           <ExerciseCard
-            key={exercise._id}
-            exercise={exercise}
-            isExpanded={!collapsedExercises.has(exercise._id)}
-            onToggleExpand={() => toggleExerciseExpand(exercise._id)}
+            key={currentExercise._id}
+            exercise={currentExercise}
+            isExpanded={!collapsedExercises.has(currentExercise._id)}
+            onToggleExpand={() => toggleExerciseExpand(currentExercise._id)}
             onAddSet={(initialData) =>
-              onAddSet(exercise._id, exercise.exerciseLibraryId, initialData)
+              onAddSet(currentExercise._id, currentExercise.exerciseLibraryId, initialData)
             }
             onUpdateSet={(setId, data) => onUpdateSet(setId, data)}
             onCompleteSet={onCompleteSet}
             onDeleteSet={onDeleteSet}
-            onRemoveExercise={() => onRemoveExercise(exercise._id)}
+            onRemoveExercise={async () => {
+              const nextCount = workout.exercises.length - 1;
+              await onRemoveExercise(currentExercise._id);
+              if (nextCount <= 0) {
+                setCurrentExerciseIndex(0);
+                return;
+              }
+              setCurrentExerciseIndex((prev) => Math.min(prev, nextCount - 1));
+            }}
             onStartRest={startRest}
-            previousPerformance={previousPerformances?.[exercise.exerciseLibraryId]}
+            previousPerformance={previousPerformances?.[currentExercise.exerciseLibraryId]}
             onViewHistory={
               onViewExerciseHistory
                 ? () =>
                     onViewExerciseHistory(
-                      exercise.exerciseLibraryId,
-                      exercise.exerciseName
+                      currentExercise.exerciseLibraryId,
+                      currentExercise.exerciseName
                     )
                 : undefined
             }
             onViewTechnique={onViewExerciseTechnique}
             supersetLabel={
-              exercise.supersetGroup
-                ? `Superset ${exercise.supersetGroup}`
+              currentExercise.supersetGroup
+                ? `Superset ${currentExercise.supersetGroup}`
                 : undefined
             }
           />
-        ))}
+        ) : (
+          <Card className="rounded-[2rem] border border-dashed border-border bg-card">
+            <CardContent className="p-8 text-center">
+              <p className="text-lg font-black text-foreground">No exercises yet</p>
+              <p className="mt-1 text-sm font-semibold text-muted-foreground">
+                Add an exercise to begin this workout.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Add Exercise Button */}
-      <button
-        className="w-full h-20 rounded-[2.5rem] bg-secondary border border-border hover:bg-secondary hover:border-border transition-all flex flex-col items-center justify-center gap-2 group"
-        onClick={() => setIsExercisePickerOpen(true)}
-      >
-        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center border border-border group-hover:border-border group-hover:scale-110 transition-all">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted-foreground group-hover:text-foreground">
-            <path d="M7 3v8M3 7h8" />
-          </svg>
-        </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground group-hover:text-foreground">
+      {/* Pager Actions */}
+      <div className="mt-auto pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+        <div className="space-y-3 rounded-[2rem] border border-border bg-card p-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setIsExercisePickerOpen(true)}
+          className="h-14 w-full rounded-full border-border bg-secondary text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground"
+        >
           Add Exercise
-        </span>
-      </button>
+        </Button>
+        <Button
+          type="button"
+          onClick={goToNextExercise}
+          disabled={!hasExercises}
+          className="h-16 w-full rounded-full text-[11px] font-black uppercase tracking-[0.22em]"
+        >
+          {isLastExercise ? "Finish Workout" : "Next Exercise"}
+        </Button>
+        </div>
+      </div>
 
       {/* Exercise Picker */}
       <ExercisePicker
@@ -329,6 +383,18 @@ export function WorkoutSession({
             >
               Keep Training
             </Button>
+            {hasExercises && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  goToPreviousExercise();
+                  setShowCancelDialog(false);
+                }}
+                className="h-12 rounded-full border-border bg-card text-sm font-black uppercase tracking-[0.15em]"
+              >
+                Previous Exercise
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

@@ -66,7 +66,9 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
 
   // Track wizard open state for dock visibility
   useEffect(() => {
-    setWizardOpen(open);
+    if (!open) return;
+    setWizardOpen(true);
+    return () => setWizardOpen(false);
   }, [open, setWizardOpen]);
 
   // Calculate targets when reaching step 8

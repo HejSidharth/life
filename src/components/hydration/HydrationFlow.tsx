@@ -31,15 +31,20 @@ export function HydrationFlow({ open, onOpenChange, onComplete }: HydrationFlowP
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    setWizardOpen(open);
     if (open) {
       setType("water");
       setAmount(250);
       setNotes("");
       setShowCelebration(false);
     }
-  }, [open, setWizardOpen]);
+  }, [open]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!open) return;
+    setWizardOpen(true);
+    return () => setWizardOpen(false);
+  }, [open, setWizardOpen]);
 
   const types: { id: BeverageType; label: string; icon: LucideIcon }[] = [
     { id: "water", label: "Water", icon: Droplets },

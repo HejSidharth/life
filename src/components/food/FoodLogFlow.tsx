@@ -63,7 +63,9 @@ export function FoodLogFlow({ open, onOpenChange, onComplete, initialMealType }:
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
-    setWizardOpen(open);
+    if (!open) return;
+    setWizardOpen(true);
+    return () => setWizardOpen(false);
   }, [open, setWizardOpen]);
 
   const mealTypes: { id: MealType; label: string; icon: LucideIcon }[] = [

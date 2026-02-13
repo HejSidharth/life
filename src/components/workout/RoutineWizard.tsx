@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlowWizard, Step } from "@/components/ui/FlowWizard";
 import {
   Dialog,
@@ -34,18 +34,89 @@ export interface RoutineData {
   }[];
 }
 
+interface RoutineDay {
+  name: string;
+  exercises: ExerciseLibraryItem[];
+}
+
+interface RoutineExerciseRowProps {
+  exercise: ExerciseLibraryItem;
+  isSelected: boolean;
+  onToggle: (exercise: ExerciseLibraryItem) => void;
+}
+
+const INITIAL_VISIBLE_COUNT = 30;
+const LOAD_MORE_COUNT = 20;
+
+const RoutineExerciseRow = memo(function RoutineExerciseRow({
+  exercise,
+  isSelected,
+  onToggle,
+}: RoutineExerciseRowProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(exercise)}
+      className={cn(
+        "w-full rounded-2xl border px-4 py-4 text-left transition-colors flex items-center justify-between",
+        isSelected
+          ? "border-foreground bg-foreground text-background"
+          : "border-border bg-card hover:bg-secondary"
+      )}
+    >
+      <div className="min-w-0">
+        <div
+          className={cn(
+            "font-black text-base leading-tight",
+            isSelected ? "text-background" : "text-foreground"
+          )}
+        >
+          {exercise.name}
+        </div>
+        <div
+          className={cn(
+            "text-[10px] font-black uppercase tracking-[0.18em] mt-1",
+            isSelected ? "text-background/75" : "text-muted-foreground"
+          )}
+        >
+          {exercise.muscleGroups[0]}
+        </div>
+      </div>
+      <div
+        className={cn(
+          "w-7 h-7 rounded-full flex items-center justify-center transition-transform border",
+          isSelected
+            ? "border-background/35 bg-background/15 text-background scale-105"
+            : "border-border bg-secondary text-muted-foreground"
+        )}
+      >
+        {isSelected ? (
+          <Check className="w-3.5 h-3.5 stroke-[3]" />
+        ) : (
+          <Plus className="w-3.5 h-3.5" />
+        )}
+      </div>
+    </button>
+  );
+});
+
 export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: RoutineWizardProps) {
   const [routineName, setRoutineName] = useState("");
   const [frequency, setFrequency] = useState(3);
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
-  const [days, setDays] = useState<{ name: string; exercises: ExerciseLibraryItem[] }[]>([]);
+  const [days, setDays] = useState<RoutineDay[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
   const [showCelebration, setShowCelebration] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const { setWizardOpen } = useWizard();
 
   // Track wizard open state for dock visibility
   useEffect(() => {
-    setWizardOpen(open);
+    if (!open) return;
+    setWizardOpen(true);
+    return () => setWizardOpen(false);
   }, [open, setWizardOpen]);
 
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -54,6 +125,7 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
       setRoutineName("");
       setFrequency(3);
       setCurrentDayIndex(0);
+      setVisibleCount(INITIAL_VISIBLE_COUNT);
       setShowCelebration(false);
     }
   }, [open]);
@@ -68,7 +140,63 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
   }, [frequency]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const toggleExercise = (exercise: ExerciseLibraryItem) => {
+  const filteredExercises = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) {
+      return exercises;
+    }
+
+    return exercises.filter((exercise) =>
+      exercise.name.toLowerCase().includes(normalizedQuery)
+    );
+  }, [exercises, searchQuery]);
+
+  const visibleExercises = useMemo(
+    () => filteredExercises.slice(0, visibleCount),
+    [filteredExercises, visibleCount]
+  );
+
+  const selectedExerciseIdsByDay = useMemo(
+    () => days.map((day) => new Set(day.exercises.map((exercise) => exercise._id))),
+    [days]
+  );
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount((prev) =>
+      Math.min(filteredExercises.length, prev + LOAD_MORE_COUNT)
+    );
+  }, [filteredExercises.length]);
+
+  useEffect(() => {
+    if (!open || visibleCount >= filteredExercises.length) {
+      return;
+    }
+
+    const root = scrollContainerRef.current;
+    const target = sentinelRef.current;
+
+    if (!root || !target) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          handleLoadMore();
+        }
+      },
+      {
+        root,
+        rootMargin: "120px 0px",
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [open, visibleCount, filteredExercises.length, handleLoadMore, currentDayIndex]);
+
+  const toggleExercise = useCallback((exercise: ExerciseLibraryItem) => {
     setDays(prev => {
       const newDays = [...prev];
       const currentDay = { ...newDays[currentDayIndex] };
@@ -83,10 +211,14 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
       newDays[currentDayIndex] = currentDay;
       return newDays;
     });
-  };
+  }, [currentDayIndex]);
 
-  const filteredExercises = exercises.filter(ex => 
-    ex.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchQuery(value);
+      setVisibleCount(INITIAL_VISIBLE_COUNT);
+    },
+    []
   );
 
   const steps: Step[] = [
@@ -162,16 +294,19 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
     ...days.map((day, index) => ({
       id: `workout-${index}`,
       title: `Workout ${index + 1}`,
-      onEnter: () => setCurrentDayIndex(index),
+      onEnter: () => {
+        setCurrentDayIndex(index);
+        setVisibleCount(INITIAL_VISIBLE_COUNT);
+      },
       isNextDisabled: days[index]?.exercises.length === 0,
       content: (
         <div className="flex-1 flex flex-col gap-6 min-h-0">
           <div className="flow-prompt-card space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] flow-muted">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                 Workout {index + 1} of {frequency}
               </span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] flow-text flow-surface px-2 py-1 rounded-md">
+              <span className="rounded-md border border-border bg-secondary px-2 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-foreground">
                 {day.exercises.length} Selected
               </span>
             </div>
@@ -182,50 +317,61 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
                 newDays[index].name = e.target.value;
                 setDays(newDays);
               }}
-              className="h-12 rounded-xl border flow-outline flow-surface px-4 text-lg font-bold flow-text focus-visible:ring-[var(--flow-progress)]/20"
+              className="h-12 rounded-xl border border-border bg-secondary px-4 text-lg font-bold text-foreground focus-visible:ring-1 focus-visible:ring-primary/20"
               placeholder="Name this workout (e.g. Push Day)"
             />
           </div>
 
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 flow-muted" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search exercises..."
-              className="h-12 rounded-2xl pl-11 flow-surface flow-outline flow-text focus-visible:ring-1 focus-visible:ring-[var(--flow-progress)]/20"
+              className="h-12 rounded-2xl border-border bg-secondary pl-11 text-foreground focus-visible:ring-1 focus-visible:ring-primary/20"
             />
           </div>
 
-          <div className="flex-1 overflow-y-auto min-h-0 -mx-4 px-4 space-y-1">
-            {filteredExercises.slice(0, 50).map((ex) => {
-              const isSelected = day.exercises.some(e => e._id === ex._id);
-              return (
-                <button
-                  key={ex._id}
-                  onClick={() => toggleExercise(ex)}
-                  className={cn(
-                    "w-full rounded-2xl border px-4 py-4 text-left transition-all flex items-center justify-between group",
-                    isSelected ? "flow-surface flow-outline" : "flow-surface flow-outline hover:opacity-95"
-                  )}
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto min-h-0 -mx-4 px-4 space-y-2"
+          >
+            {visibleExercises.map((exercise) => (
+              <RoutineExerciseRow
+                key={exercise._id}
+                exercise={exercise}
+                isSelected={selectedExerciseIdsByDay[index]?.has(exercise._id) ?? false}
+                onToggle={toggleExercise}
+              />
+            ))}
+
+            {filteredExercises.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-border bg-secondary px-4 py-10 text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-muted-foreground">
+                  No exercises found
+                </p>
+              </div>
+            )}
+
+            {filteredExercises.length > 0 && (
+              <p className="pt-1 text-center text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                Showing {visibleExercises.length} of {filteredExercises.length}
+              </p>
+            )}
+
+            {visibleCount < filteredExercises.length && (
+              <div className="space-y-2 pb-1">
+                <div ref={sentinelRef} className="h-2 w-full" aria-hidden />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleLoadMore}
+                  className="w-full rounded-2xl border-border bg-card text-[10px] font-black uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground"
                 >
-                  <div className="min-w-0">
-                    <div className={cn("font-bold text-base transition-colors", isSelected ? "flow-text" : "flow-muted group-hover:text-[var(--flow-text)]")}>
-                      {ex.name}
-                    </div>
-                    <div className="text-[10px] font-bold flow-muted uppercase tracking-widest mt-0.5">
-                      {ex.muscleGroups[0]}
-                    </div>
-                  </div>
-                  <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center transition-all",
-                    isSelected ? "flow-cta text-white scale-110" : "border flow-outline flow-text"
-                  )}>
-                    {isSelected ? <Check className="w-3 h-3 stroke-[4]" /> : <Plus className="w-3 h-3" />}
-                  </div>
-                </button>
-              );
-            })}
+                  Load More
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       )

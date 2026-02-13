@@ -176,7 +176,7 @@ export function SetRow({
 
   // -- Active set or editing: focused input card --
   return (
-    <div className="rounded-[2rem] bg-secondary border border-border p-6 space-y-6 shadow-2xl">
+    <div className="space-y-6 rounded-[2rem] border border-border bg-secondary p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -188,7 +188,7 @@ export function SetRow({
           <button
             type="button"
             onClick={() => setShowTypeSelector(!showTypeSelector)}
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-muted-foreground transition-colors"
+            className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
           >
             {SET_TYPE_LABELS[setType]}
           </button>
@@ -199,7 +199,7 @@ export function SetRow({
             <button
               type="button"
               onClick={handleCancelEdits}
-              className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-muted-foreground transition-colors px-2 py-1"
+              className="px-2 py-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
             >
               Cancel
             </button>
@@ -250,7 +250,7 @@ export function SetRow({
           <button
             type="button"
             onClick={() => adjustWeight(-weightStep)}
-            className="w-11 h-11 rounded-xl bg-muted hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+            className="h-11 w-11 shrink-0 rounded-xl bg-muted text-lg font-bold text-muted-foreground transition-colors active:scale-95 hover:text-foreground"
           >
             &minus;
           </button>
@@ -270,7 +270,7 @@ export function SetRow({
           <button
             type="button"
             onClick={() => adjustWeight(weightStep)}
-            className="w-11 h-11 rounded-xl bg-muted hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+            className="h-11 w-11 shrink-0 rounded-xl bg-muted text-lg font-bold text-muted-foreground transition-colors active:scale-95 hover:text-foreground"
           >
             +
           </button>
@@ -291,7 +291,7 @@ export function SetRow({
           <button
             type="button"
             onClick={() => adjustReps(-1)}
-            className="w-11 h-11 rounded-xl bg-muted hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+            className="h-11 w-11 shrink-0 rounded-xl bg-muted text-lg font-bold text-muted-foreground transition-colors active:scale-95 hover:text-foreground"
           >
             &minus;
           </button>
@@ -308,7 +308,7 @@ export function SetRow({
           <button
             type="button"
             onClick={() => adjustReps(1)}
-            className="w-11 h-11 rounded-xl bg-muted hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+            className="h-11 w-11 shrink-0 rounded-xl bg-muted text-lg font-bold text-muted-foreground transition-colors active:scale-95 hover:text-foreground"
           >
             +
           </button>

@@ -34,7 +34,9 @@ export function WorkoutStarterDialog({
 
   // Track wizard open state for dock visibility
   useEffect(() => {
-    setWizardOpen(open);
+    if (!open) return;
+    setWizardOpen(true);
+    return () => setWizardOpen(false);
   }, [open, setWizardOpen]);
 
   return (
