@@ -234,11 +234,11 @@ export const SET_TYPE_LABELS: Record<SetType, string> = {
 };
 
 export const SET_TYPE_COLORS: Record<SetType, string> = {
-  warmup: "text-yellow-600 bg-yellow-50 dark:text-yellow-400 dark:bg-yellow-950",
-  working: "text-primary bg-primary/10",
-  drop: "text-purple-600 bg-purple-50 dark:text-purple-400 dark:bg-purple-950",
+  warmup: "text-accent bg-accent/15",
+  working: "text-primary-foreground bg-primary",
+  drop: "text-primary bg-primary/15",
   failure: "text-destructive bg-destructive/10",
-  rest_pause: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-950",
+  rest_pause: "text-foreground bg-secondary",
   backoff: "text-muted-foreground bg-muted",
 };
 

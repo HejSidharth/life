@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { FlowWizard, Step } from "@/components/ui/FlowWizard";
 import { cn } from "@/lib/utils";
-import { Utensils, Coffee, Sun, Moon, Search, Plus, Check, Sparkles } from "lucide-react";
+import { Utensils, Coffee, Sun, Moon, Check } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import { useWizard } from "@/context/WizardContext";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
@@ -43,7 +45,9 @@ export function FoodLogFlow({ open, onOpenChange, onComplete, initialMealType }:
   const [fat, setFat] = useState("");
   const [portion, setPortion] = useState("1 serving");
   const [showCelebration, setShowCelebration] = useState(false);
+  const { setWizardOpen } = useWizard();
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (open) {
       if (initialMealType) setMealType(initialMealType);
@@ -56,8 +60,13 @@ export function FoodLogFlow({ open, onOpenChange, onComplete, initialMealType }:
       setShowCelebration(false);
     }
   }, [open, initialMealType]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  const mealTypes: { id: MealType; label: string; icon: any }[] = [
+  useEffect(() => {
+    setWizardOpen(open);
+  }, [open, setWizardOpen]);
+
+  const mealTypes: { id: MealType; label: string; icon: LucideIcon }[] = [
     { id: "breakfast", label: "Breakfast", icon: Sun },
     { id: "lunch", label: "Lunch", icon: Utensils },
     { id: "dinner", label: "Dinner", icon: Moon },
@@ -70,9 +79,9 @@ export function FoodLogFlow({ open, onOpenChange, onComplete, initialMealType }:
       title: "Which meal?",
       content: (
         <div className="space-y-10 py-4">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">What are we eating?</h2>
-            <p className="text-zinc-500 font-medium text-center italic">Categorize your entry.</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">What are we eating?</h2>
+            <p className="flow-muted font-medium italic">Categorize your entry.</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {mealTypes.map((t) => (
@@ -82,8 +91,8 @@ export function FoodLogFlow({ open, onOpenChange, onComplete, initialMealType }:
                 className={cn(
                   "h-32 rounded-3xl border transition-all active:scale-95 flex flex-col items-center justify-center gap-3",
                   mealType === t.id
-                    ? "bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.1)]"
-                    : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700"
+                    ? "flow-cta text-white border-transparent"
+                    : "flow-surface flow-outline flow-text hover:opacity-95"
                 )}
               >
                 <t.icon className="w-8 h-8" />
@@ -100,30 +109,30 @@ export function FoodLogFlow({ open, onOpenChange, onComplete, initialMealType }:
       isNextDisabled: !name,
       content: (
         <div className="space-y-10 py-4">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">What's the food?</h2>
-            <p className="text-zinc-500 font-medium text-center italic">Enter the name and portion size.</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">What&apos;s the food?</h2>
+            <p className="flow-muted font-medium italic">Enter the name and portion size.</p>
           </div>
           
           <div className="space-y-6">
             <div className="space-y-2 text-center">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Name</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] flow-muted">Name</label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Grilled Chicken"
-                className="h-16 text-xl font-bold bg-zinc-900/50 border-zinc-800 rounded-2xl px-6 focus-visible:ring-white/20 text-center"
+                className="h-16 rounded-2xl px-6 text-center text-xl font-bold flow-surface flow-outline flow-text focus-visible:ring-[var(--flow-progress)]/20"
                 autoFocus
               />
             </div>
             
             <div className="space-y-2 text-center">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Portion</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] flow-muted">Portion</label>
               <Input
                 value={portion}
                 onChange={(e) => setPortion(e.target.value)}
                 placeholder="e.g. 200g, 1 bowl"
-                className="h-14 text-lg font-bold bg-zinc-900/50 border-zinc-800 rounded-2xl px-6 focus-visible:ring-white/20 text-center"
+                className="h-14 rounded-2xl px-6 text-center text-lg font-bold flow-surface flow-outline flow-text focus-visible:ring-[var(--flow-progress)]/20"
               />
             </div>
           </div>
@@ -136,50 +145,50 @@ export function FoodLogFlow({ open, onOpenChange, onComplete, initialMealType }:
       isNextDisabled: !calories || !protein,
       content: (
         <div className="space-y-8 py-4">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">Nutrition Facts</h2>
-            <p className="text-zinc-500 font-medium text-center italic">Fuel your body with the right macros.</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">Nutrition Facts</h2>
+            <p className="flow-muted font-medium italic">Fuel your body with the right macros.</p>
           </div>
           
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2 text-center">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Calories</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] flow-muted">Calories</label>
               <Input
                 type="number"
                 value={calories}
                 onChange={(e) => setCalories(e.target.value)}
                 placeholder="kcal"
-                className="h-14 text-2xl font-black bg-zinc-900/50 border-zinc-800 rounded-2xl px-4 text-center"
+                className="h-14 rounded-2xl px-4 text-center text-2xl font-display font-black flow-surface flow-outline flow-text"
               />
             </div>
             <div className="space-y-2 text-center">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Protein (g)</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] flow-muted">Protein (g)</label>
               <Input
                 type="number"
                 value={protein}
                 onChange={(e) => setProtein(e.target.value)}
                 placeholder="g"
-                className="h-14 text-2xl font-black bg-zinc-900/50 border-zinc-800 rounded-2xl px-4 text-center"
+                className="h-14 rounded-2xl px-4 text-center text-2xl font-display font-black flow-surface flow-outline flow-text"
               />
             </div>
             <div className="space-y-2 text-center">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Carbs (g)</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] flow-muted">Carbs (g)</label>
               <Input
                 type="number"
                 value={carbs}
                 onChange={(e) => setCarbs(e.target.value)}
                 placeholder="g"
-                className="h-14 text-2xl font-black bg-zinc-900/50 border-zinc-800 rounded-2xl px-4 text-center"
+                className="h-14 rounded-2xl px-4 text-center text-2xl font-display font-black flow-surface flow-outline flow-text"
               />
             </div>
             <div className="space-y-2 text-center">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600">Fat (g)</label>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] flow-muted">Fat (g)</label>
               <Input
                 type="number"
                 value={fat}
                 onChange={(e) => setFat(e.target.value)}
                 placeholder="g"
-                className="h-14 text-2xl font-black bg-zinc-900/50 border-zinc-800 rounded-2xl px-4 text-center"
+                className="h-14 rounded-2xl px-4 text-center text-2xl font-display font-black flow-surface flow-outline flow-text"
               />
             </div>
           </div>
@@ -191,27 +200,29 @@ export function FoodLogFlow({ open, onOpenChange, onComplete, initialMealType }:
   if (showCelebration) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl h-[90vh] flex flex-col gap-0 p-0 overflow-hidden border-zinc-900 bg-black sm:rounded-[2.5rem]">
+        <DialogContent className="flow-theme flow-bg max-w-2xl h-[90vh] flex flex-col gap-0 p-0 overflow-hidden bg-background sm:rounded-[2.5rem]">
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-8">
             <motion.div 
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", damping: 12 }}
-              className="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(34,197,94,0.3)]"
+              className="w-32 h-32 flow-cta rounded-full flex items-center justify-center border border-border"
             >
               <Check className="w-16 h-16 text-white stroke-[4]" />
             </motion.div>
-            <div className="space-y-4">
-              <h1 className="text-4xl font-black tracking-tight leading-tight">
+            <div className="flow-prompt-card space-y-4">
+              <h1 className="text-4xl font-display font-black tracking-tight leading-tight flow-text">
                 Logged! 🚀
               </h1>
-              <p className="text-zinc-500 text-lg font-medium max-w-xs mx-auto leading-relaxed">
+              <p className="flow-muted text-lg font-medium max-w-xs mx-auto leading-relaxed">
                 Registered {calories}kcal of {name}. Fueling the fire!
               </p>
             </div>
             <Button
               onClick={() => onOpenChange(false)}
-              className="w-full h-16 rounded-[2rem] bg-white text-black hover:bg-zinc-200 text-lg font-bold"
+              variant="pillPrimary"
+              size="pill"
+              className="font-display w-full max-w-[20rem]"
             >
               Back to Menu
             </Button>
@@ -226,6 +237,12 @@ export function FoodLogFlow({ open, onOpenChange, onComplete, initialMealType }:
       open={open}
       onOpenChange={onOpenChange}
       steps={steps}
+      className="w-screen h-[100dvh] max-w-lg mx-auto rounded-none"
+      showCloseButton={true}
+      closeOnOverlayClick={false}
+      closeOnEscape={false}
+      onSkip={() => onOpenChange(false)}
+      skipLabel="Cancel"
       onComplete={async () => {
         await onComplete({
           name,

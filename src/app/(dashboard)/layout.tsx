@@ -11,10 +11,10 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <WizardProvider>
-      <div className="min-h-screen bg-background text-white selection:bg-white/10 selection:text-white">
+      <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-foreground">
         {/* Main Content */}
         <motion.main
-          className="pt-10 pb-32 px-4 max-w-lg mx-auto md:max-w-6xl"
+          className="pt-10 pb-32 px-4 max-w-lg mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.1 }}

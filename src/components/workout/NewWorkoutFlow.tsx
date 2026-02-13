@@ -37,9 +37,9 @@ export function NewWorkoutFlow({ open, onOpenChange, onComplete }: NewWorkoutFlo
       isNextDisabled: !name,
       content: (
         <div className="space-y-10 py-4">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">Name your session</h2>
-            <p className="text-zinc-500 font-medium text-center italic">Give today&apos;s training an identity.</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">Name your session</h2>
+            <p className="flow-muted font-medium italic">Give today&apos;s training an identity.</p>
           </div>
           
           <div className="space-y-6">
@@ -47,7 +47,7 @@ export function NewWorkoutFlow({ open, onOpenChange, onComplete }: NewWorkoutFlo
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Morning Shred"
-              className="h-16 text-2xl font-bold bg-zinc-900/50 border-zinc-800 rounded-2xl px-6 focus-visible:ring-white/20 text-center"
+              className="h-16 rounded-2xl px-6 text-center text-2xl font-bold flow-surface flow-outline flow-text focus-visible:ring-[var(--flow-progress)]/20"
               autoFocus
             />
             
@@ -59,8 +59,8 @@ export function NewWorkoutFlow({ open, onOpenChange, onComplete }: NewWorkoutFlo
                   className={cn(
                     "px-4 py-2 rounded-full text-xs font-bold transition-all border",
                     name === p
-                      ? "bg-white text-black border-white"
-                      : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700"
+                      ? "flow-cta text-white border-transparent"
+                      : "flow-surface flow-outline flow-text hover:opacity-90"
                   )}
                 >
                   {p}
@@ -83,7 +83,7 @@ export function NewWorkoutFlow({ open, onOpenChange, onComplete }: NewWorkoutFlo
       open={open}
       onOpenChange={onOpenChange}
       steps={steps}
-      className="w-screen h-[100dvh] max-w-none rounded-none border-0"
+      className="w-screen h-[100dvh] max-w-lg mx-auto rounded-none"
       showCloseButton={true}
       closeOnOverlayClick={false}
       closeOnEscape={false}

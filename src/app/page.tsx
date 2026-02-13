@@ -28,10 +28,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-white/10 selection:text-white">
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-foreground">
       {/* Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 glass-header">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-lg mx-auto px-6 h-16 flex items-center justify-between">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -42,12 +42,12 @@ export default function HomePage() {
           
           <div className="flex items-center gap-4">
             <Link href="/sign-in">
-              <Button variant="ghost" className="text-sm font-medium hover:bg-white/5">
+              <Button variant="ghost" className="text-sm font-medium hover:bg-primary/10">
                 Sign in
               </Button>
             </Link>
             <Link href="/sign-up">
-              <Button size="sm" className="bg-white text-black hover:bg-zinc-200 font-bold rounded-full px-5">
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold rounded-full px-5">
                 Get started
               </Button>
             </Link>
@@ -56,14 +56,14 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <main className="pt-32 pb-20 px-6 max-w-6xl mx-auto">
+      <main className="pt-32 pb-20 px-6 max-w-lg mx-auto">
         <div className="text-center space-y-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, ...springTransition }}
           >
-            <span className="px-4 py-1.5 rounded-full border border-white/10 bg-zinc-900/50 text-xs font-bold uppercase tracking-widest text-zinc-400">
+            <span className="px-4 py-1.5 rounded-full border border-border bg-secondary text-xs font-bold uppercase tracking-widest text-muted-foreground">
               The Ultimate Health Portal
             </span>
           </motion.div>
@@ -75,11 +75,11 @@ export default function HomePage() {
             transition={{ delay: 0.2, ...springTransition }}
           >
             Precision <br />
-            <span className="text-zinc-500">Self Tracking.</span>
+            <span className="text-muted-foreground">Self Tracking.</span>
           </motion.h1>
 
           <motion.p 
-            className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto font-medium"
+            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto font-medium"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, ...springTransition }}
@@ -95,11 +95,11 @@ export default function HomePage() {
             transition={{ delay: 0.4, ...springTransition }}
           >
             <Link href="/sign-up">
-              <Button size="lg" className="h-16 px-10 bg-white text-black hover:bg-zinc-200 text-lg font-bold rounded-2xl group shadow-2xl shadow-white/5">
+              <Button size="lg" className="h-16 px-10 bg-primary text-primary-foreground hover:bg-primary/90 text-lg font-bold rounded-2xl group shadow-2xl shadow-primary/10">
                 Start Tracking
               </Button>
             </Link>
-            <Button variant="ghost" size="lg" className="h-16 px-10 text-zinc-400 hover:text-white hover:bg-white/5 text-lg font-bold rounded-2xl">
+            <Button variant="ghost" size="lg" className="h-16 px-10 text-muted-foreground hover:text-foreground hover:bg-primary/10 text-lg font-bold rounded-2xl">
               Learn More
             </Button>
           </motion.div>
@@ -126,40 +126,40 @@ export default function HomePage() {
 
         {/* Secondary Info */}
         <motion.div 
-          className="mt-32 p-12 rounded-[2.5rem] bg-zinc-900/30 border border-white/5 text-center space-y-6 overflow-hidden relative"
+          className="mt-32 p-12 rounded-[2.5rem] bg-secondary border border-border/70 text-center space-y-6 overflow-hidden relative"
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={springTransition}
         >
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-white/5 blur-[100px] rounded-full" />
-          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-white/5 blur-[100px] rounded-full" />
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-primary/10 blur-[100px] rounded-full" />
+          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-primary/10 blur-[100px] rounded-full" />
           
           <h2 className="text-3xl md:text-5xl font-black tracking-tighter">Designed for the modern athlete.</h2>
-          <p className="text-zinc-500 max-w-xl mx-auto font-medium">
+          <p className="text-muted-foreground max-w-xl mx-auto font-medium">
             No fluff. No ads. Just pure, intentional data visualization for your life.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 pt-6">
-            <div className="flex items-center gap-2 text-zinc-400 font-bold uppercase tracking-widest text-[10px]">
+            <div className="flex items-center gap-2 text-muted-foreground font-bold uppercase tracking-widest text-[10px]">
               Private
             </div>
-            <div className="flex items-center gap-2 text-zinc-400 font-bold uppercase tracking-widest text-[10px]">
+            <div className="flex items-center gap-2 text-muted-foreground font-bold uppercase tracking-widest text-[10px]">
               Fast
             </div>
-            <div className="flex items-center gap-2 text-zinc-400 font-bold uppercase tracking-widest text-[10px]">
+            <div className="flex items-center gap-2 text-muted-foreground font-bold uppercase tracking-widest text-[10px]">
               Native Feel
             </div>
           </div>
         </motion.div>
       </main>
 
-      <footer className="py-12 border-t border-white/5">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+      <footer className="py-12 border-t border-border/70">
+        <div className="max-w-lg mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
           <span className="text-xl font-black tracking-tighter gradient-text">Life</span>
-          <p className="text-zinc-600 text-sm font-medium">Built for excellence by Hejamadi.</p>
+          <p className="text-muted-foreground text-sm font-medium">Built for excellence by Hejamadi.</p>
           <div className="flex items-center gap-6">
-            <a href="#" className="text-zinc-600 hover:text-white transition-colors text-sm font-medium">Terms</a>
-            <a href="#" className="text-zinc-600 hover:text-white transition-colors text-sm font-medium">Privacy</a>
+            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">Terms</a>
+            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">Privacy</a>
           </div>
         </div>
       </footer>
@@ -175,10 +175,10 @@ function FeatureCard({ title, description, delay }: { title: string, description
       viewport={{ once: true }}
       transition={{ delay, ...springTransition }}
       whileHover={{ y: -5 }}
-      className="p-8 rounded-[2rem] bg-zinc-900/50 border border-white/5 hover:border-white/10 transition-all group shadow-sm"
+      className="p-8 rounded-[2rem] bg-secondary border border-border/70 hover:border-border transition-all group shadow-sm"
     >
       <h3 className="text-xl font-bold mb-3">{title}</h3>
-      <p className="text-zinc-500 font-medium text-sm leading-relaxed">{description}</p>
+      <p className="text-muted-foreground font-medium text-sm leading-relaxed">{description}</p>
     </motion.div>
   );
 }

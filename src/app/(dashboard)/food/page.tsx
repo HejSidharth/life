@@ -6,19 +6,11 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useActiveDate } from "@/hooks/use-active-date";
+import { getDayPhase } from "@/lib/dayPhase";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { format } from "date-fns";
 import { FoodLogFlow, FoodData } from "@/components/food/FoodLogFlow";
+import { MascotSceneHero } from "@/components/dashboard/MascotSceneHero";
 import type { Id } from "convex/_generated/dataModel";
 
 type MealType = "breakfast" | "lunch" | "dinner" | "snack";
@@ -49,25 +41,6 @@ interface FavoriteFoodItem {
   portionSize: string;
 }
 
-interface BarcodeCandidate {
-  _id: string;
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber?: number;
-  servingSize: number;
-  servingUnit: string;
-  source: FoodSource;
-  barcode?: string;
-}
-
-interface BarcodeLookupResult {
-  confidence: number;
-  candidates: BarcodeCandidate[];
-}
-
 interface DailyGoals {
   calories: number;
   protein: number;
@@ -88,6 +61,7 @@ function FoodContent() {
   const userId = user?.id;
 
   const { selectedDate, isToday, getLogTimestamp } = useActiveDate();
+  const dayPhase = getDayPhase();
 
   // Convex Queries
   const foods = (useQuery(
@@ -126,12 +100,6 @@ function FoodContent() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<MealType>("lunch");
-  const [barcodeInput, setBarcodeInput] = useState("");
-
-  const barcodeLookup = useQuery(
-    api.foodCatalog.lookupByBarcode,
-    barcodeInput.trim().length > 3 ? { barcode: barcodeInput.trim() } : "skip"
-  ) as BarcodeLookupResult | undefined;
   const recentFoods = (recentFoodsRaw || []) as FoodLogItem[];
   const favoriteFoods = (favoriteFoodsRaw || []) as FavoriteFoodItem[];
 
@@ -144,6 +112,13 @@ function FoodContent() {
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 }
   );
+  const bananaSlots = 5;
+  const metCalories = totalNutrition.calories >= goals.calories;
+  const metProtein = totalNutrition.protein >= goals.protein;
+  const metCarbs = totalNutrition.carbs >= goals.carbs;
+  const metFat = totalNutrition.fat >= goals.fat;
+  const metCount = [metCalories, metProtein, metCarbs, metFat].filter(Boolean).length;
+  const activeBananas = Math.min(bananaSlots, metCount + (metCount === 4 ? 1 : 0));
 
   const mealGroups = {
     breakfast: foods.filter((f: { mealType: string }) => f.mealType === "breakfast"),
@@ -171,107 +146,136 @@ function FoodContent() {
     });
   };
 
-  const handleAddFromCatalog = async (item: BarcodeCandidate) => {
-    if (!userId) return;
-    await addFood({
-      userId,
-      name: item.name,
-      mealType: selectedMealType,
-      calories: item.calories,
-      protein: item.protein,
-      carbs: item.carbs,
-      fat: item.fat,
-      fiber: item.fiber,
-      portionSize: `${item.servingSize}${item.servingUnit}`,
-      consumedAt: getLogTimestamp(),
-      source: item.source,
-      foodItemId: item._id as Id<"foodItems">,
-      barcode: item.barcode,
-      sourceConfidence: barcodeLookup?.confidence ?? 0.8,
-    });
-  };
-
   const handleSeedFoods = async () => {
     await seedPackagedFoods({});
   };
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={springTransition}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {isToday ? "Nutrition" : format(selectedDate, "EEEE")}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {isToday ? "Fuel your performance." : format(selectedDate, "MMMM do, yyyy")}
-          </p>
-        </div>
-      </motion.div>
+      <MascotSceneHero
+        sceneKey="food"
+        title={isToday ? "Nutrition" : format(selectedDate, "EEEE")}
+        subtitle={isToday ? `${dayPhase} · Fuel your performance.` : format(selectedDate, "MMMM do, yyyy")}
+        dateLabel={format(selectedDate, "yyyy")}
+        showMascot={false}
+        sceneMode="sky"
+        compact
+        minHeight="10.375rem"
+        skyColor="#2f6fd6"
+        className="pt-3"
+        footer={(
+          <div className="mt-1 flex items-center justify-start gap-1.5">
+            {Array.from({ length: bananaSlots }).map((_, index) => (
+              <span
+                key={`banana-${index}`}
+                className={`text-lg leading-none ${index < activeBananas ? "opacity-100" : "opacity-35"}`}
+                aria-hidden
+              >
+                🍌
+              </span>
+            ))}
+            <span className="ml-1 text-sm font-black text-white">
+              {activeBananas}/{bananaSlots}
+            </span>
+          </div>
+        )}
+      />
 
       {/* Daily Summary Card */}
-      <motion.div
+      <motion.section
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.1, ...springTransition }}
+        className="rounded-[2rem] border border-border bg-card p-5"
       >
-        <Card className="border-0 bg-zinc-900/50 shadow-xl overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Calories Remaining</p>
-                <h2 className="text-4xl font-black mt-1">
-                  {Math.max(0, goals.calories - totalNutrition.calories)}
-                  <span className="text-lg font-bold text-zinc-500 ml-2">kcal</span>
-                </h2>
-              </div>
-              <div className="text-right">
-                <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Consumed</p>
-                <p className="text-lg font-bold">{totalNutrition.calories}</p>
-              </div>
-            </div>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold tracking-wide text-muted-foreground">
+              Calories Remaining
+            </p>
+            <h2 className="mt-2 text-6xl font-black leading-none text-foreground">
+              {Math.max(0, goals.calories - totalNutrition.calories)}
+              <span className="ml-2 text-4xl text-muted-foreground">kcal</span>
+            </h2>
+            <p className="mt-2 text-sm font-bold text-muted-foreground">
+              {totalNutrition.calories} consumed of {goals.calories} goal
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-background px-4 py-3 text-right">
+            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Consumed</p>
+            <p className="mt-1 text-2xl font-black text-foreground">
+              {totalNutrition.calories}
+              <span className="ml-1 text-sm text-muted-foreground">kcal</span>
+            </p>
+          </div>
+        </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <MacroProgress label="Protein" current={totalNutrition.protein} goal={goals.protein} unit="g" />
-              <MacroProgress label="Carbs" current={totalNutrition.carbs} goal={goals.carbs} unit="g" />
-              <MacroProgress label="Fat" current={totalNutrition.fat} goal={goals.fat} unit="g" />
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+        <div className="mt-6 grid grid-cols-3 gap-3">
+          <MacroProgress label="Protein" current={totalNutrition.protein} goal={goals.protein} unit="g" />
+          <MacroProgress label="Carbs" current={totalNutrition.carbs} goal={goals.carbs} unit="g" />
+          <MacroProgress label="Fat" current={totalNutrition.fat} goal={goals.fat} unit="g" />
+        </div>
+      </motion.section>
 
-      {/* Log Food Button */}
       <motion.div
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.96 }}
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.98 }}
         transition={springTransition}
       >
-        <Button
-          onClick={() => setIsDialogOpen(true)}
-          className="w-full h-16 rounded-3xl bg-white text-black hover:bg-zinc-200 text-lg font-bold shadow-xl shadow-white/5"
-        >
-          Add Food Entry
-        </Button>
+        <div className="rounded-[1.75rem] border border-border bg-card p-2">
+          <Button
+            onClick={() => setIsDialogOpen(true)}
+            className="h-11 w-full rounded-2xl border border-border bg-foreground text-[10px] font-black uppercase tracking-[0.2em] text-background transition-transform active:scale-95"
+          >
+            Add Food Entry
+          </Button>
+        </div>
       </motion.div>
 
-      <Card className="border-border/40 bg-zinc-950/50">
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Quick Add: Favorites & Recents</h3>
-            <Button variant="ghost" size="sm" onClick={handleSeedFoods}>
-              Seed Packaged Foods
+      <section className="rounded-[1.75rem] border border-border bg-card p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-black uppercase tracking-wider text-foreground">Quick Add</h3>
+          <Button variant="outline" size="sm" onClick={handleSeedFoods} className="rounded-full border-border bg-background font-bold">
+            Seed Foods
+          </Button>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {favoriteFoods.slice(0, 6).map((food) => (
+            <Button
+              key={food._id}
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                addFood({
+                  userId: userId!,
+                  name: food.name,
+                  mealType: selectedMealType,
+                  calories: food.calories,
+                  protein: food.protein,
+                  carbs: food.carbs,
+                  fat: food.fat,
+                  fiber: food.fiber,
+                  portionSize: food.portionSize,
+                  consumedAt: getLogTimestamp(),
+                  source: "manual" as FoodSource,
+                })
+              }
+              className="rounded-full border-border bg-background text-xs font-bold"
+            >
+              {food.name}
             </Button>
-          </div>
+          ))}
+          {favoriteFoods.length === 0 && (
+            <p className="text-xs font-semibold text-muted-foreground">No favorites yet. Entries will appear here automatically.</p>
+          )}
+        </div>
+        <div className="mt-4 space-y-2">
+          <p className="text-xs font-black uppercase tracking-wider text-muted-foreground">Recent meals</p>
           <div className="flex flex-wrap gap-2">
-            {favoriteFoods.slice(0, 6).map((food) => (
+            {recentFoods.slice(0, 6).map((food) => (
               <Button
                 key={food._id}
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() =>
                   addFood({
@@ -285,100 +289,71 @@ function FoodContent() {
                     fiber: food.fiber,
                     portionSize: food.portionSize,
                     consumedAt: getLogTimestamp(),
-                    source: "manual" as FoodSource,
+                    source: (food.source ?? "manual") as FoodSource,
                   })
                 }
-                className="text-xs"
+                className="rounded-full border border-border bg-background text-xs font-bold"
               >
-                {food.name}
+                Repeat {food.name}
               </Button>
             ))}
-            {favoriteFoods.length === 0 && (
-              <p className="text-xs text-zinc-500">No favorites yet. Entries will appear here automatically.</p>
-            )}
           </div>
-          <div className="space-y-1">
-            <p className="text-xs text-zinc-500 uppercase tracking-wider">Recent meals</p>
-            <div className="flex flex-wrap gap-2">
-              {recentFoods.slice(0, 6).map((food) => (
-                <Button
-                  key={food._id}
-                  variant="secondary"
-                  size="sm"
-                  onClick={() =>
-                    addFood({
-                      userId: userId!,
-                      name: food.name,
-                      mealType: selectedMealType,
-                      calories: food.calories,
-                      protein: food.protein,
-                      carbs: food.carbs,
-                      fat: food.fat,
-                      fiber: food.fiber,
-                      portionSize: food.portionSize,
-                      consumedAt: getLogTimestamp(),
-                      source: (food.source ?? "manual") as FoodSource,
-                    })
-                  }
-                  className="text-xs"
-                >
-                  Repeat {food.name}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* Meal Sections */}
       <div className="space-y-4">
         {MEAL_TYPES.map((type) => (
-          <div key={type} className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-lg font-semibold capitalize">{type}</h3>
-              <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+          <section key={type} className="space-y-2 rounded-[1.5rem] border border-border bg-card p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-black capitalize text-foreground">{type}</h3>
+              <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                 {mealGroups[type].reduce((sum: number, f: { calories: number }) => sum + f.calories, 0)} kcal
               </p>
             </div>
-            
+
             <div className="space-y-2">
               {mealGroups[type].length === 0 ? (
-                <div 
-                  className="p-4 bg-zinc-950/30 rounded-2xl border border-zinc-900/50 flex items-center justify-center cursor-pointer hover:bg-zinc-900/50 transition-all"
+                <button
+                  type="button"
+                  className="w-full rounded-2xl border border-border bg-background p-4 text-center transition-opacity hover:opacity-90"
                   onClick={() => {
                     setSelectedMealType(type);
                     setIsDialogOpen(true);
                   }}
                 >
-                  <span className="text-xs font-bold text-zinc-700 uppercase tracking-widest">Log {type}</span>
-                </div>
+                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Log {type}</span>
+                </button>
               ) : (
                 mealGroups[type].map((food) => (
                   <motion.div
                     key={food._id}
                     layoutId={food._id}
-                    className="group relative flex items-center justify-between p-4 bg-zinc-950/50 rounded-2xl border border-zinc-900 shadow-sm transition-all hover:border-zinc-800"
+                    className="group relative flex items-center justify-between rounded-2xl border border-border bg-background p-4"
                   >
                     <div className="flex items-center gap-3">
                       <div>
-                        <p className="font-semibold text-zinc-200">{food.name}</p>
-                        <p className="text-xs text-zinc-500 font-medium">
+                        <p className="font-black text-foreground">{food.name}</p>
+                        <p className="text-xs font-semibold text-muted-foreground">
                           {food.portionSize} · P: {food.protein}g · C: {food.carbs}g · F: {food.fat}g
                         </p>
                         {food.source && (
-                          <p className="text-[10px] text-zinc-600 uppercase tracking-wider mt-1">
+                          <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                             Source: {food.source.replace("_", " ")}
                             {food.sourceConfidence !== undefined && ` · ${(food.sourceConfidence * 100).toFixed(0)}%`}
                           </p>
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
-                      <span className="font-bold text-zinc-300">{food.calories}<span className="text-[10px] ml-0.5 text-zinc-500 font-bold uppercase">kcal</span></span>
-                      <button 
+                      <span className="font-black text-foreground">
+                        {food.calories}
+                        <span className="ml-0.5 text-[10px] font-bold uppercase text-muted-foreground">kcal</span>
+                      </span>
+                      <button
                         onClick={() => removeFood({ id: food._id as Id<"foods"> })}
-                        className="h-8 px-2 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                        className="rounded-lg px-2 py-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground transition-all hover:bg-red-500/10 hover:text-red-500"
                       >
                         Delete
                       </button>
@@ -387,7 +362,7 @@ function FoodContent() {
                 ))
               )}
             </div>
-          </div>
+          </section>
         ))}
       </div>
 
@@ -404,14 +379,14 @@ function FoodContent() {
 function MacroProgress({ label, current, goal, unit }: { label: string, current: number, goal: number, unit: string }) {
   const progress = Math.min(100, (current / goal) * 100);
   return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+    <div className="rounded-2xl border border-border bg-background p-3">
+      <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-muted-foreground">
         <span>{label}</span>
         <span>{current}/{goal}{unit}</span>
       </div>
-      <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-muted">
         <motion.div 
-          className="h-full bg-zinc-400" 
+          className="h-full rounded-full bg-primary" 
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 1, ease: "easeOut" }}
@@ -423,7 +398,7 @@ function MacroProgress({ label, current, goal, unit }: { label: string, current:
 
 export default function FoodPage() {
   return (
-    <Suspense fallback={<div className="w-full h-32 animate-pulse bg-zinc-900 rounded-3xl" />}>
+    <Suspense fallback={<div className="w-full h-32 animate-pulse bg-secondary rounded-3xl" />}>
       <FoodContent />
     </Suspense>
   );

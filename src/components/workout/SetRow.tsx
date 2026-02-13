@@ -133,41 +133,41 @@ export function SetRow({
       <button
         type="button"
         onClick={() => setIsEditing(true)}
-        className="w-full flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-zinc-900/50 transition-colors text-left group"
+        className="w-full flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-secondary transition-colors text-left group"
       >
-        <span className="w-6 h-6 rounded-full bg-zinc-800 text-[10px] font-bold flex items-center justify-center text-zinc-400 shrink-0">
+        <span className="w-6 h-6 rounded-full bg-muted text-[10px] font-bold flex items-center justify-center text-muted-foreground shrink-0">
           {setNumber}
         </span>
 
-        <span className="flex-1 text-sm font-medium text-zinc-300 min-w-0">
+        <span className="flex-1 text-sm font-medium text-foreground min-w-0">
           {weight != null && (
             <span className="tabular-nums">{weight} {weightUnit}</span>
           )}
           {weight != null && reps != null && (
-            <span className="text-zinc-700 mx-2 text-xs opacity-50">&times;</span>
+            <span className="text-muted-foreground mx-2 text-xs opacity-50">&times;</span>
           )}
           {reps != null && (
             <span className="tabular-nums font-semibold">{reps}</span>
           )}
           {rpe != null && (
-            <span className="text-zinc-500 ml-2.5 text-[10px] font-black uppercase tracking-widest">@{rpe}</span>
+            <span className="text-muted-foreground ml-2.5 text-[10px] font-black uppercase tracking-widest">@{rpe}</span>
           )}
           {setType !== "working" && (
-            <span className="text-zinc-700 ml-3 text-[9px] font-black uppercase tracking-[0.2em] opacity-40">
+            <span className="text-muted-foreground ml-3 text-[9px] font-black uppercase tracking-[0.2em] opacity-40">
               {SET_TYPE_LABELS[setType]}
             </span>
           )}
         </span>
 
         {isPR ? (
-          <span className="text-[10px] font-black text-white uppercase tracking-tight bg-zinc-800 px-2 py-0.5 rounded-md">
+          <span className="text-[10px] font-black text-foreground uppercase tracking-tight bg-muted px-2 py-0.5 rounded-md">
             PR
           </span>
         ) : (
-          <div className="w-1.5 h-1.5 rounded-full bg-zinc-700 shrink-0" />
+          <div className="w-1.5 h-1.5 rounded-full bg-muted shrink-0" />
         )}
 
-        <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
           Edit
         </span>
       </button>
@@ -176,11 +176,11 @@ export function SetRow({
 
   // -- Active set or editing: focused input card --
   return (
-    <div className="rounded-[2rem] bg-zinc-900/30 border border-zinc-900/50 p-6 space-y-6 shadow-2xl">
+    <div className="rounded-[2rem] bg-secondary border border-border p-6 space-y-6 shadow-2xl">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="w-8 h-8 rounded-full bg-white text-black text-[10px] font-black flex items-center justify-center">
+          <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center">
             {setNumber}
           </span>
 
@@ -188,7 +188,7 @@ export function SetRow({
           <button
             type="button"
             onClick={() => setShowTypeSelector(!showTypeSelector)}
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 hover:text-zinc-400 transition-colors"
+            className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-muted-foreground transition-colors"
           >
             {SET_TYPE_LABELS[setType]}
           </button>
@@ -199,7 +199,7 @@ export function SetRow({
             <button
               type="button"
               onClick={handleCancelEdits}
-              className="text-[10px] font-black uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors px-2 py-1"
+              className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-muted-foreground transition-colors px-2 py-1"
             >
               Cancel
             </button>
@@ -207,7 +207,7 @@ export function SetRow({
             <button
               type="button"
               onClick={onDelete}
-              className="text-zinc-800 hover:text-destructive transition-colors p-2"
+              className="text-foreground hover:text-destructive transition-colors p-2"
             >
               <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M3.5 3.5l7 7M10.5 3.5l-7 7" />
@@ -231,8 +231,8 @@ export function SetRow({
               className={cn(
                 "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all",
                 setType === type
-                  ? "bg-white text-black"
-                  : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
               {SET_TYPE_LABELS[type]}
@@ -243,14 +243,14 @@ export function SetRow({
 
       {/* Weight input */}
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 block">
+        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground block">
           Weight
         </label>
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => adjustWeight(-weightStep)}
-            className="w-11 h-11 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+            className="w-11 h-11 rounded-xl bg-muted hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
           >
             &minus;
           </button>
@@ -261,22 +261,22 @@ export function SetRow({
               value={localWeight}
               onChange={(e) => setLocalWeight(e.target.value)}
               placeholder={previousWeight?.toString() || "0"}
-              className="h-12 text-center text-lg font-bold bg-zinc-800/50 border-zinc-700/50 rounded-xl pr-12 focus-visible:ring-1 focus-visible:ring-white/20"
+              className="h-12 text-center text-lg font-bold bg-muted border-border rounded-xl pr-12 focus-visible:ring-1 focus-visible:ring-primary/20"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-zinc-600 uppercase">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground uppercase">
               {weightUnit}
             </span>
           </div>
           <button
             type="button"
             onClick={() => adjustWeight(weightStep)}
-            className="w-11 h-11 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+            className="w-11 h-11 rounded-xl bg-muted hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
           >
             +
           </button>
         </div>
         {previousWeight != null && (
-          <p className="text-[10px] text-zinc-600 text-center">
+          <p className="text-[10px] text-muted-foreground text-center">
             prev: {previousWeight} {weightUnit}
           </p>
         )}
@@ -284,14 +284,14 @@ export function SetRow({
 
       {/* Reps input */}
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 block">
+        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground block">
           Reps
         </label>
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => adjustReps(-1)}
-            className="w-11 h-11 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+            className="w-11 h-11 rounded-xl bg-muted hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
           >
             &minus;
           </button>
@@ -302,19 +302,19 @@ export function SetRow({
               value={localReps}
               onChange={(e) => setLocalReps(e.target.value)}
               placeholder={previousReps?.toString() || "0"}
-              className="h-12 text-center text-lg font-bold bg-zinc-800/50 border-zinc-700/50 rounded-xl focus-visible:ring-1 focus-visible:ring-white/20"
+              className="h-12 text-center text-lg font-bold bg-muted border-border rounded-xl focus-visible:ring-1 focus-visible:ring-primary/20"
             />
           </div>
           <button
             type="button"
             onClick={() => adjustReps(1)}
-            className="w-11 h-11 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
+            className="w-11 h-11 rounded-xl bg-muted hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center text-lg font-bold transition-colors active:scale-95 shrink-0"
           >
             +
           </button>
         </div>
         {previousReps != null && (
-          <p className="text-[10px] text-zinc-600 text-center">
+          <p className="text-[10px] text-muted-foreground text-center">
             prev: {previousReps} reps
           </p>
         )}
@@ -323,8 +323,8 @@ export function SetRow({
       {/* RPE pills */}
       {showRpe && (
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 block">
-            RPE <span className="font-medium normal-case tracking-normal text-zinc-700">optional</span>
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground block">
+            RPE <span className="font-medium normal-case tracking-normal text-muted-foreground">optional</span>
           </label>
           <div className="flex gap-1.5 flex-wrap">
             {RPE_OPTIONS.map((val) => (
@@ -335,8 +335,8 @@ export function SetRow({
                 className={cn(
                   "px-3 py-2 rounded-xl text-sm font-bold transition-all active:scale-95",
                   localRpe === val
-                    ? "bg-white text-black"
-                    : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
                 )}
               >
                 {val}
@@ -349,8 +349,8 @@ export function SetRow({
       {/* RIR input (alternative to RPE) */}
       {showRir && !showRpe && (
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-600 block">
-            RIR <span className="font-medium normal-case tracking-normal text-zinc-700">reps in reserve</span>
+          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground block">
+            RIR <span className="font-medium normal-case tracking-normal text-muted-foreground">reps in reserve</span>
           </label>
           <div className="flex gap-1.5">
             {["0", "1", "2", "3", "4", "5"].map((val) => (
@@ -361,8 +361,8 @@ export function SetRow({
                 className={cn(
                   "px-3 py-2 rounded-xl text-sm font-bold transition-all flex-1 active:scale-95",
                   localRir === val
-                    ? "bg-white text-black"
-                    : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
                 )}
               >
                 {val}

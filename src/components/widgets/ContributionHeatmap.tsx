@@ -20,33 +20,33 @@ export function ContributionHeatmap({ counts, onDateClick }: ContributionHeatmap
   }, []);
 
   const getIntensity = (count: number) => {
-    if (!count) return "bg-zinc-900";
-    if (count < 3) return "bg-zinc-700";
-    if (count < 6) return "bg-zinc-500";
-    if (count < 10) return "bg-zinc-300";
-    return "bg-white";
+    if (!count) return "bg-secondary";
+    if (count < 3) return "bg-primary/20";
+    if (count < 6) return "bg-primary/40";
+    if (count < 10) return "bg-accent/70";
+    return "bg-primary";
   };
 
   return (
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between px-1">
-        <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-500">
+        <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
           Activity Insights
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold text-zinc-600">Less</span>
+          <span className="text-[10px] font-bold text-muted-foreground">Less</span>
           <div className="flex gap-1">
-            <div className="w-2 h-2 rounded-sm bg-zinc-900" />
-            <div className="w-2 h-2 rounded-sm bg-zinc-700" />
-            <div className="w-2 h-2 rounded-sm bg-zinc-500" />
-            <div className="w-2 h-2 rounded-sm bg-zinc-300" />
-            <div className="w-2 h-2 rounded-sm bg-white" />
+            <div className="w-2 h-2 rounded-sm bg-secondary" />
+            <div className="w-2 h-2 rounded-sm bg-primary/20" />
+            <div className="w-2 h-2 rounded-sm bg-primary/40" />
+            <div className="w-2 h-2 rounded-sm bg-accent/70" />
+            <div className="w-2 h-2 rounded-sm bg-primary" />
           </div>
-          <span className="text-[10px] font-bold text-zinc-600">More</span>
+          <span className="text-[10px] font-bold text-muted-foreground">More</span>
         </div>
       </div>
 
-      <div className="bg-zinc-900/30 border border-white/5 rounded-[2rem] p-6 overflow-x-auto hide-scrollbar">
+      <div className="bg-secondary border border-border/70 rounded-[2rem] p-6 overflow-x-auto hide-scrollbar">
         <div className="flex gap-1.5 min-w-max">
           {/* Group into weeks */}
           {Array.from({ length: 18 }).map((_, weekIndex) => (

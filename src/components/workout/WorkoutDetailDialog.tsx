@@ -76,7 +76,7 @@ export function WorkoutDetailDialog({
             {workout?.name || "Workout"}
           </DialogTitle>
           {workout && (
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {format(new Date(workout.startedAt), "eeee, MMMM do")}
               {workout.duration != null && ` · ${formatDuration(workout.duration * 60)}`}
             </p>
@@ -86,23 +86,23 @@ export function WorkoutDetailDialog({
         {isLoading || !workout ? (
           <div className="space-y-4 py-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-24 rounded-2xl bg-zinc-900/50 animate-pulse" />
+              <div key={i} className="h-24 rounded-2xl bg-secondary animate-pulse" />
             ))}
           </div>
         ) : (
           <div className="space-y-5 mt-2">
             {/* Summary stats */}
-            <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+            <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
               <span>
-                <span className="text-zinc-200">{completedSets}</span> sets
+                <span className="text-foreground">{completedSets}</span> sets
               </span>
               {totalVolume > 0 && (
                 <span>
-                  <span className="text-zinc-200">{totalVolume.toLocaleString()}</span> vol
+                  <span className="text-foreground">{totalVolume.toLocaleString()}</span> vol
                 </span>
               )}
               {prCount > 0 && (
-                <span className="text-white">
+                <span className="text-foreground">
                   {prCount} PR{prCount !== 1 ? "s" : ""}
                 </span>
               )}
@@ -117,7 +117,7 @@ export function WorkoutDetailDialog({
 
                 return (
                   <div key={exercise._id} className="space-y-2">
-                    <h3 className="font-semibold text-sm text-zinc-100">
+                    <h3 className="font-semibold text-sm text-foreground">
                       {exercise.exerciseName}
                     </h3>
                     <div className="space-y-1">
@@ -126,25 +126,25 @@ export function WorkoutDetailDialog({
                           key={`${exercise._id}-${set.setNumber}`}
                           className="flex items-center gap-3 py-1.5 px-3 rounded-lg"
                         >
-                          <span className="w-5 h-5 rounded-full bg-zinc-800 text-[9px] font-bold flex items-center justify-center text-zinc-500 shrink-0">
+                          <span className="w-5 h-5 rounded-full bg-muted text-[9px] font-bold flex items-center justify-center text-muted-foreground shrink-0">
                             {set.setNumber}
                           </span>
-                          <span className="text-sm text-zinc-300 flex-1">
+                          <span className="text-sm text-foreground flex-1">
                             {set.weight != null && (
                               <span className="font-medium">{set.weight} {set.weightUnit}</span>
                             )}
                             {set.weight != null && set.reps != null && (
-                              <span className="text-zinc-600 mx-1">&times;</span>
+                              <span className="text-muted-foreground mx-1">&times;</span>
                             )}
                             {set.reps != null && (
                               <span className="font-medium">{set.reps}</span>
                             )}
                             {set.rpe != null && (
-                              <span className="text-zinc-600 ml-1.5 text-xs">@{set.rpe}</span>
+                              <span className="text-muted-foreground ml-1.5 text-xs">@{set.rpe}</span>
                             )}
                           </span>
                           {set.isPR && (
-                            <span className="text-[9px] font-black text-white uppercase tracking-tight bg-zinc-800 px-1.5 py-0.5 rounded">
+                            <span className="text-[9px] font-black text-foreground uppercase tracking-tight bg-muted px-1.5 py-0.5 rounded">
                               PR
                             </span>
                           )}

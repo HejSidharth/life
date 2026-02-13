@@ -7,7 +7,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ExerciseLibraryItem } from "@/types/workout";
+import type { ExerciseLibraryItem } from "@/types/workout";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Search, Plus, Check, X } from "lucide-react";
@@ -48,6 +48,7 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
     setWizardOpen(open);
   }, [open, setWizardOpen]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (open) {
       setRoutineName("");
@@ -65,6 +66,7 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
       }))
     );
   }, [frequency]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const toggleExercise = (exercise: ExerciseLibraryItem) => {
     setDays(prev => {
@@ -93,12 +95,12 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
       title: "Welcome",
       content: (
         <div className="flex flex-col items-center justify-center h-full text-center space-y-8">
-          <div className="space-y-4">
-            <h1 className="text-4xl font-black tracking-tight leading-tight">
+          <div className="flow-prompt-card space-y-4">
+            <h1 className="text-4xl font-display font-black tracking-tight leading-tight flow-text">
               Build your perfect <br />
-              <span className="text-zinc-500">training routine</span>
+              <span className="flow-muted">training routine</span>
             </h1>
-            <p className="text-zinc-500 text-lg font-medium max-w-xs mx-auto leading-relaxed">
+            <p className="flow-muted text-lg font-medium max-w-xs mx-auto leading-relaxed">
               Customized workouts that match your goals and schedule.
             </p>
           </div>
@@ -112,15 +114,15 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
       isNextDisabled: !routineName,
       content: (
         <div className="space-y-8 py-10">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight">Name your routine</h2>
-            <p className="text-zinc-500 font-medium italic">What should we call this program?</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">Name your routine</h2>
+            <p className="flow-muted font-medium italic">What should we call this program?</p>
           </div>
           <Input
             value={routineName}
             onChange={(e) => setRoutineName(e.target.value)}
             placeholder="e.g. Hypertrophy Split"
-            className="h-16 text-2xl font-bold bg-zinc-900/50 border-zinc-800 rounded-2xl px-6 focus-visible:ring-white/20"
+            className="h-16 rounded-2xl px-6 text-2xl font-bold flow-surface flow-outline flow-text focus-visible:ring-[var(--flow-progress)]/20"
             autoFocus
           />
         </div>
@@ -131,25 +133,27 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
       title: "Frequency",
       content: (
         <div className="space-y-8 py-10">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight">Weekly Frequency</h2>
-            <p className="text-zinc-500 font-medium">How many unique workouts per routine?</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">Weekly Frequency</h2>
+            <p className="flow-muted font-medium">How many unique workouts per routine?</p>
           </div>
-          <div className="grid grid-cols-4 gap-3">
+
+          <div className="mx-auto flex w-full max-w-[15rem] flex-col gap-2">
             {[1, 2, 3, 4, 5, 6, 7].map((num) => (
               <button
                 key={num}
                 onClick={() => setFrequency(num)}
                 className={cn(
-                  "h-16 rounded-2xl border text-xl font-bold transition-all active:scale-95",
+                  "h-14 rounded-2xl border text-2xl font-display font-black transition-all active:scale-95",
                   frequency === num
-                    ? "bg-white text-black border-white"
-                    : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                    ? "flow-cta text-white border-transparent"
+                    : "flow-surface flow-outline flow-text"
                 )}
               >
                 {num}
               </button>
             ))}
+            <p className="pt-2 text-center text-sm flow-muted">{frequency} workouts per week selected</p>
           </div>
         </div>
       )
@@ -162,12 +166,12 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
       isNextDisabled: days[index]?.exercises.length === 0,
       content: (
         <div className="flex-1 flex flex-col gap-6 min-h-0">
-          <div className="space-y-4">
+          <div className="flow-prompt-card space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] flow-muted">
                 Workout {index + 1} of {frequency}
               </span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300 bg-zinc-900 px-2 py-1 rounded-md">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] flow-text flow-surface px-2 py-1 rounded-md">
                 {day.exercises.length} Selected
               </span>
             </div>
@@ -178,18 +182,18 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
                 newDays[index].name = e.target.value;
                 setDays(newDays);
               }}
-              className="h-12 text-xl font-bold bg-transparent border-0 border-b border-zinc-800 rounded-none px-0 focus-visible:ring-0 focus-visible:border-white/50"
+              className="h-12 rounded-xl border flow-outline flow-surface px-4 text-lg font-bold flow-text focus-visible:ring-[var(--flow-progress)]/20"
               placeholder="Name this workout (e.g. Push Day)"
             />
           </div>
 
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 flow-muted" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search exercises..."
-              className="h-12 pl-11 rounded-2xl bg-zinc-900/50 border-zinc-800/50 focus-visible:ring-1 focus-visible:ring-white/20"
+              className="h-12 rounded-2xl pl-11 flow-surface flow-outline flow-text focus-visible:ring-1 focus-visible:ring-[var(--flow-progress)]/20"
             />
           </div>
 
@@ -201,21 +205,21 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
                   key={ex._id}
                   onClick={() => toggleExercise(ex)}
                   className={cn(
-                    "w-full text-left px-4 py-4 rounded-2xl transition-all flex items-center justify-between group",
-                    isSelected ? "bg-white/[0.05] border-white/10" : "hover:bg-zinc-900/50"
+                    "w-full rounded-2xl border px-4 py-4 text-left transition-all flex items-center justify-between group",
+                    isSelected ? "flow-surface flow-outline" : "flow-surface flow-outline hover:opacity-95"
                   )}
                 >
                   <div className="min-w-0">
-                    <div className={cn("font-bold text-base transition-colors", isSelected ? "text-white" : "text-zinc-400 group-hover:text-zinc-200")}>
+                    <div className={cn("font-bold text-base transition-colors", isSelected ? "flow-text" : "flow-muted group-hover:text-[var(--flow-text)]")}>
                       {ex.name}
                     </div>
-                    <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-0.5">
+                    <div className="text-[10px] font-bold flow-muted uppercase tracking-widest mt-0.5">
                       {ex.muscleGroups[0]}
                     </div>
                   </div>
                   <div className={cn(
                     "w-6 h-6 rounded-full flex items-center justify-center transition-all",
-                    isSelected ? "bg-white text-black scale-110" : "border border-zinc-800 text-zinc-800"
+                    isSelected ? "flow-cta text-white scale-110" : "border flow-outline flow-text"
                   )}>
                     {isSelected ? <Check className="w-3 h-3 stroke-[4]" /> : <Plus className="w-3 h-3" />}
                   </div>
@@ -236,11 +240,11 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
   if (showCelebration) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="w-screen h-[100dvh] max-w-none rounded-none border-0 flex flex-col gap-0 p-0 overflow-hidden bg-black">
+        <DialogContent className="flow-theme flow-bg w-screen h-[100dvh] max-w-lg mx-auto rounded-none bg-background flex flex-col gap-0 p-0 overflow-hidden">
           {/* Exit Button */}
           <button
             onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-zinc-900/80 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all active:scale-95"
+            className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full flow-surface border flow-outline flex items-center justify-center flow-muted hover:opacity-90 transition-all active:scale-95"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -251,21 +255,23 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", damping: 12 }}
-              className="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(34,197,94,0.3)]"
+              className="w-32 h-32 flow-cta rounded-full flex items-center justify-center "
             >
               <Check className="w-16 h-16 text-white stroke-[4]" />
             </motion.div>
-            <div className="space-y-4">
-              <h1 className="text-4xl font-black tracking-tight leading-tight">
+            <div className="flow-prompt-card space-y-4">
+              <h1 className="text-4xl font-display font-black tracking-tight leading-tight flow-text">
                 Ready to roll!
               </h1>
-              <p className="text-zinc-500 text-lg font-medium max-w-xs mx-auto leading-relaxed">
+              <p className="flow-muted text-lg font-medium max-w-xs mx-auto leading-relaxed">
                 Your routine is saved and ready for your first session.
               </p>
             </div>
             <Button
               onClick={() => onOpenChange(false)}
-              className="w-full h-16 rounded-[2rem] bg-white text-black hover:bg-zinc-200 text-lg font-bold"
+              variant="pillPrimary"
+              size="pill"
+              className="font-display w-full max-w-[20rem]"
             >
               Go to Dashboard
             </Button>
@@ -280,7 +286,7 @@ export function RoutineWizard({ open, onOpenChange, exercises, onCreate }: Routi
       open={open}
       onOpenChange={onOpenChange}
       steps={steps}
-      className="w-screen h-[100dvh] max-w-none rounded-none border-0"
+      className="w-screen h-[100dvh] max-w-lg mx-auto rounded-none"
       showCloseButton={true}
       closeOnOverlayClick={false}
       closeOnEscape={false}

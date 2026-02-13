@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { FlowWizard, Step } from "@/components/ui/FlowWizard";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useWizard } from "@/context/WizardContext";
@@ -11,13 +10,7 @@ import { api } from "convex/_generated/api";
 import {
   Target,
   Dumbbell,
-  Apple,
   Droplets,
-  ArrowRight,
-  Check,
-  User,
-  Calendar,
-  Settings,
 } from "lucide-react";
 
 interface OnboardingFlowProps {
@@ -36,13 +29,13 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
   const [weightUnit, setWeightUnit] = useState<"lbs" | "kg">("lbs");
   const [heightUnit, setHeightUnit] = useState<"ft" | "cm">("ft");
 
-  // Step 2: Body metrics
-  const [age, setAge] = useState<number>(25);
+  // Step 2: Body metrics (stored as strings for better input handling)
+  const [age, setAge] = useState<string>("25");
   const [gender, setGender] = useState<"male" | "female" | "other">("male");
-  const [heightFt, setHeightFt] = useState<number>(5);
-  const [heightIn, setHeightIn] = useState<number>(9);
-  const [heightCm, setHeightCm] = useState<number>(175);
-  const [weight, setWeight] = useState<number>(170);
+  const [heightFt, setHeightFt] = useState<string>("5");
+  const [heightIn, setHeightIn] = useState<string>("9");
+  const [heightCm, setHeightCm] = useState<string>("175");
+  const [weight, setWeight] = useState<string>("170");
 
   // Step 3: Activity level
   const [activityLevel, setActivityLevel] = useState<
@@ -79,14 +72,20 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
   // Calculate targets when reaching step 8
   useEffect(() => {
     if (open && !calculatedTargets) {
-      const weightKg = weightUnit === "lbs" ? weight * 0.453592 : weight;
-      const heightCmValue = heightUnit === "ft" ? (heightFt * 30.48) + (heightIn * 2.54) : heightCm;
+      const weightValue = parseFloat(weight) || 170;
+      const heightFtValue = parseFloat(heightFt) || 5;
+      const heightInValue = parseFloat(heightIn) || 9;
+      const heightCmValue = parseFloat(heightCm) || 175;
+      const ageValue = parseInt(age) || 25;
+      
+      const weightKg = weightUnit === "lbs" ? weightValue * 0.453592 : weightValue;
+      const heightCmTotal = heightUnit === "ft" ? (heightFtValue * 30.48) + (heightInValue * 2.54) : heightCmValue;
 
       calculateCalories({
         clerkId,
         weightKg,
-        heightCm: heightCmValue,
-        age,
+        heightCm: heightCmTotal,
+        age: ageValue,
         gender,
         activityLevel,
         fitnessGoal,
@@ -139,17 +138,16 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
     {
       id: "welcome",
       title: "Welcome",
-      hideFooter: true,
       content: (
         <div className="flex flex-col items-center justify-center h-full text-center space-y-8 px-4">
-          <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center">
-            <Dumbbell className="w-12 h-12 text-white" />
+          <div className="w-24 h-24 rounded-full bg-[rgba(31,29,40,0.08)] flex items-center justify-center">
+            <Dumbbell className="w-12 h-12 flow-text" />
           </div>
-          <div className="space-y-4">
-            <h1 className="text-4xl font-black tracking-tight text-white">
+          <div className="flow-prompt-card space-y-4">
+            <h1 className="text-4xl font-display font-black tracking-tight flow-text">
               Welcome to Life
             </h1>
-            <p className="text-zinc-500 text-lg max-w-sm mx-auto">
+            <p className="flow-muted text-lg max-w-sm mx-auto">
               Let&apos;s personalize your fitness journey. We&apos;ll set up your profile and goals in just a few steps.
             </p>
           </div>
@@ -161,14 +159,14 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
       title: "Units",
       content: (
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">Choose Your Units</h2>
-            <p className="text-zinc-500 text-center">Select your preferred measurement system</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text text-center">Choose Your Units</h2>
+            <p className="flow-muted text-center">Select your preferred measurement system</p>
           </div>
 
           <div className="space-y-6">
             <div className="space-y-3">
-              <label className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Weight</label>
+              <label className="text-sm font-bold flow-muted uppercase tracking-wider">Weight</label>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { id: "lbs", label: "Pounds (lbs)" },
@@ -180,8 +178,8 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
                     className={cn(
                       "p-4 rounded-2xl border text-left transition-all",
                       weightUnit === unit.id
-                        ? "bg-white text-black border-white"
-                        : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                        ? "flow-cta text-white border-transparent"
+                        : "flow-surface flow-outline flow-text hover:opacity-95"
                     )}
                   >
                     <div className="font-bold">{unit.label}</div>
@@ -191,7 +189,7 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Height</label>
+              <label className="text-sm font-bold flow-muted uppercase tracking-wider">Height</label>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { id: "ft", label: "Feet & Inches" },
@@ -203,8 +201,8 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
                     className={cn(
                       "p-4 rounded-2xl border text-left transition-all",
                       heightUnit === unit.id
-                        ? "bg-white text-black border-white"
-                        : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                        ? "flow-cta text-white border-transparent"
+                        : "flow-surface flow-outline flow-text hover:opacity-95"
                     )}
                   >
                     <div className="font-bold">{unit.label}</div>
@@ -221,24 +219,29 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
       title: "Body Metrics",
       content: (
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">Your Body Metrics</h2>
-            <p className="text-zinc-500 text-center">Used to calculate your daily targets</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text text-center">Your Body Metrics</h2>
+            <p className="flow-muted text-center">Used to calculate your daily targets</p>
           </div>
 
           <div className="space-y-6">
             <div className="space-y-3">
-              <label className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Age</label>
+              <label className="text-sm font-bold flow-muted uppercase tracking-wider">Age</label>
               <Input
                 type="number"
                 value={age}
-                onChange={(e) => setAge(parseInt(e.target.value) || 25)}
-                className="h-14 text-xl font-bold bg-zinc-900/50 border-zinc-800 rounded-2xl px-4"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "" || /^\d*$/.test(value)) {
+                    setAge(value);
+                  }
+                }}
+                className="h-14 text-xl font-bold flow-surface flow-outline rounded-2xl px-4"
               />
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Gender</label>
+              <label className="text-sm font-bold flow-muted uppercase tracking-wider">Gender</label>
               <div className="grid grid-cols-3 gap-3">
                 {[
                   { id: "male", label: "Male" },
@@ -251,8 +254,8 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
                     className={cn(
                       "p-4 rounded-2xl border text-center transition-all",
                       gender === g.id
-                        ? "bg-white text-black border-white"
-                        : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                        ? "flow-cta text-white border-transparent"
+                        : "flow-surface flow-outline flow-text hover:opacity-95"
                     )}
                   >
                     <div className="font-bold">{g.label}</div>
@@ -262,48 +265,69 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Height</label>
+              <label className="text-sm font-bold flow-muted uppercase tracking-wider">Height</label>
               {heightUnit === "ft" ? (
                 <div className="flex gap-3">
                   <div className="flex-1">
                     <Input
                       type="number"
                       value={heightFt}
-                      onChange={(e) => setHeightFt(parseInt(e.target.value) || 5)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*$/.test(value)) {
+                          setHeightFt(value);
+                        }
+                      }}
                       placeholder="5"
-                      className="h-14 text-xl font-bold bg-zinc-900/50 border-zinc-800 rounded-2xl px-4 text-center"
+                      className="h-14 text-xl font-bold flow-surface flow-outline rounded-2xl px-4 text-center"
                     />
-                    <div className="text-xs text-zinc-600 text-center mt-1">ft</div>
+                    <div className="text-xs flow-muted text-center mt-1">ft</div>
                   </div>
                   <div className="flex-1">
                     <Input
                       type="number"
                       value={heightIn}
-                      onChange={(e) => setHeightIn(parseInt(e.target.value) || 9)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*$/.test(value)) {
+                          setHeightIn(value);
+                        }
+                      }}
                       placeholder="9"
-                      className="h-14 text-xl font-bold bg-zinc-900/50 border-zinc-800 rounded-2xl px-4 text-center"
+                      className="h-14 text-xl font-bold flow-surface flow-outline rounded-2xl px-4 text-center"
                     />
-                    <div className="text-xs text-zinc-600 text-center mt-1">in</div>
+                    <div className="text-xs flow-muted text-center mt-1">in</div>
                   </div>
                 </div>
               ) : (
                 <Input
                   type="number"
                   value={heightCm}
-                  onChange={(e) => setHeightCm(parseInt(e.target.value) || 175)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "" || /^\d*$/.test(value)) {
+                      setHeightCm(value);
+                    }
+                  }}
                   placeholder="175"
-                  className="h-14 text-xl font-bold bg-zinc-900/50 border-zinc-800 rounded-2xl px-4"
+                  className="h-14 text-xl font-bold flow-surface flow-outline rounded-2xl px-4"
                 />
               )}
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Current Weight ({weightUnit})</label>
+              <label className="text-sm font-bold flow-muted uppercase tracking-wider">Current Weight ({weightUnit})</label>
               <Input
                 type="number"
                 value={weight}
-                onChange={(e) => setWeight(parseInt(e.target.value) || 170)}
-                className="h-14 text-xl font-bold bg-zinc-900/50 border-zinc-800 rounded-2xl px-4"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow empty string or valid numbers (including decimals)
+                  if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                    setWeight(value);
+                  }
+                }}
+                className="h-14 text-xl font-bold flow-surface flow-outline rounded-2xl px-4"
               />
             </div>
           </div>
@@ -315,9 +339,9 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
       title: "Activity Level",
       content: (
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">Activity Level</h2>
-            <p className="text-zinc-500 text-center">How active are you outside of workouts?</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text text-center">Activity Level</h2>
+            <p className="flow-muted text-center">How active are you outside of workouts?</p>
           </div>
 
           <div className="space-y-3">
@@ -328,12 +352,12 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
                 className={cn(
                   "w-full p-5 rounded-2xl border text-left transition-all",
                   activityLevel === level.id
-                    ? "bg-white text-black border-white"
-                    : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                    ? "flow-cta text-white border-transparent"
+                    : "flow-surface flow-outline flow-text hover:opacity-95"
                 )}
               >
                 <div className="font-bold text-lg">{level.label}</div>
-                <div className={cn("text-sm mt-1", activityLevel === level.id ? "text-black/60" : "text-zinc-600")}>
+                <div className={cn("text-sm mt-1", activityLevel === level.id ? "text-white/70" : "flow-muted")}>
                   {level.desc}
                 </div>
               </button>
@@ -347,9 +371,9 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
       title: "Fitness Goal",
       content: (
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">What&apos;s Your Goal?</h2>
-            <p className="text-zinc-500 text-center">This helps us calculate your daily targets</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text text-center">What&apos;s Your Goal?</h2>
+            <p className="flow-muted text-center">This helps us calculate your daily targets</p>
           </div>
 
           <div className="space-y-3">
@@ -360,12 +384,12 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
                 className={cn(
                   "w-full p-5 rounded-2xl border text-left transition-all",
                   fitnessGoal === goal.id
-                    ? "bg-white text-black border-white"
-                    : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                    ? "flow-cta text-white border-transparent"
+                    : "flow-surface flow-outline flow-text hover:opacity-95"
                 )}
               >
                 <div className="font-bold text-lg">{goal.label}</div>
-                <div className={cn("text-sm mt-1", fitnessGoal === goal.id ? "text-black/60" : "text-zinc-600")}>
+                <div className={cn("text-sm mt-1", fitnessGoal === goal.id ? "text-white/70" : "flow-muted")}>
                   {goal.desc}
                 </div>
               </button>
@@ -379,31 +403,32 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
       title: "Weekly Workouts",
       content: (
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">Weekly Workout Goal</h2>
-            <p className="text-zinc-500 text-center">How many days per week do you want to train?</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">
+              Weekly Workout Goal
+            </h2>
+            <p className="flow-muted">
+              How many days per week do you want to train?
+            </p>
           </div>
 
-          <div className="space-y-6">
-            <div className="flex justify-center">
-              <div className="text-6xl font-black text-white">{weeklyWorkoutGoal}</div>
-            </div>
-
-            <input
-              type="range"
-              min={2}
-              max={7}
-              value={weeklyWorkoutGoal}
-              onChange={(e) => setWeeklyWorkoutGoal(parseInt(e.target.value))}
-              className="w-full h-3 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-white"
-            />
-
-            <div className="flex justify-between text-xs text-zinc-600 font-bold uppercase tracking-wider">
-              <span>2 days</span>
-              <span>7 days</span>
-            </div>
-
-            <p className="text-center text-zinc-500 text-sm">
+          <div className="mx-auto flex w-full max-w-[15rem] flex-col gap-2">
+            {[2, 3, 4, 5, 6, 7].map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setWeeklyWorkoutGoal(value)}
+                className={cn(
+                  "h-14 rounded-2xl border font-display text-2xl font-black transition-all",
+                  weeklyWorkoutGoal === value
+                    ? "flow-cta border-transparent text-white"
+                    : "flow-surface flow-outline flow-text"
+                )}
+              >
+                {value}
+              </button>
+            ))}
+            <p className="pt-2 text-center text-sm flow-muted">
               {weeklyWorkoutGoal} days per week = {Math.round((weeklyWorkoutGoal / 7) * 100)}% consistency
             </p>
           </div>
@@ -416,13 +441,13 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
       isNextDisabled: preferredDays.length !== weeklyWorkoutGoal,
       content: (
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">Preferred Training Days</h2>
-            <p className="text-zinc-500 text-center">
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">Preferred Training Days</h2>
+            <p className="flow-muted">
               Select {weeklyWorkoutGoal} days that work best for you
             </p>
             {preferredDays.length !== weeklyWorkoutGoal && (
-              <p className="text-center text-amber-500 text-sm">
+              <p className="text-sm flow-muted">
                 Selected {preferredDays.length} of {weeklyWorkoutGoal} required days
               </p>
             )}
@@ -439,10 +464,10 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
                   className={cn(
                     "aspect-square rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all",
                     isSelected
-                      ? "bg-white text-black border-white"
+                      ? "flow-cta text-white border-transparent"
                       : preferredDays.length >= weeklyWorkoutGoal
-                      ? "bg-zinc-900/30 border-zinc-800 text-zinc-600 cursor-not-allowed"
-                      : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                      ? "flow-surface flow-outline flow-text cursor-not-allowed"
+                      : "flow-surface flow-outline flow-text hover:opacity-95"
                   )}
                 >
                   <span className="text-xs font-bold">{day.label}</span>
@@ -451,13 +476,13 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
             })}
           </div>
 
-          <div className="text-center text-sm text-zinc-500">
+          <div className="text-center text-sm flow-muted">
             {preferredDays.length === weeklyWorkoutGoal ? (
-              <span className="text-green-500">✓ Perfect! {preferredDays.length} days selected</span>
+              <span className="text-[var(--flow-progress)]">✓ Perfect! {preferredDays.length} days selected</span>
             ) : preferredDays.length < weeklyWorkoutGoal ? (
               <span>Select {weeklyWorkoutGoal - preferredDays.length} more day{weeklyWorkoutGoal - preferredDays.length > 1 ? "s" : ""}</span>
             ) : (
-              <span className="text-red-500">Too many days selected</span>
+              <span className="flow-text">Too many days selected</span>
             )}
           </div>
         </div>
@@ -468,9 +493,9 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
       title: "Experience",
       content: (
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">Experience Level</h2>
-            <p className="text-zinc-500 text-center">How would you describe your fitness experience?</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text text-center">Experience Level</h2>
+            <p className="flow-muted text-center">How would you describe your fitness experience?</p>
           </div>
 
           <div className="space-y-3">
@@ -481,12 +506,12 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
                 className={cn(
                   "w-full p-5 rounded-2xl border text-left transition-all",
                   experienceLevel === level.id
-                    ? "bg-white text-black border-white"
-                    : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                    ? "flow-cta text-white border-transparent"
+                    : "flow-surface flow-outline flow-text hover:opacity-95"
                 )}
               >
                 <div className="font-bold text-lg">{level.label}</div>
-                <div className={cn("text-sm mt-1", experienceLevel === level.id ? "text-black/60" : "text-zinc-600")}>
+                <div className={cn("text-sm mt-1", experienceLevel === level.id ? "text-white/70" : "flow-muted")}>
                   {level.desc}
                 </div>
               </button>
@@ -500,59 +525,59 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
       title: "Your Targets",
       content: (
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">Daily Targets</h2>
-            <p className="text-zinc-500 text-center">Auto-calculated based on your profile</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text text-center">Daily Targets</h2>
+            <p className="flow-muted text-center">Auto-calculated based on your profile</p>
           </div>
 
           {calculatedTargets ? (
             <div className="space-y-4">
-              <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800">
+              <div className="flow-surface rounded-2xl p-5 border flow-outline">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Target className="w-5 h-5 text-zinc-400" />
-                    <span className="font-bold text-white">Calories</span>
+                    <Target className="w-5 h-5 flow-muted" />
+                    <span className="font-bold flow-text">Calories</span>
                   </div>
-                  <span className="text-2xl font-black text-white">{calculatedTargets.targetCalories}</span>
+                  <span className="text-2xl font-display font-black flow-text">{calculatedTargets.targetCalories}</span>
                 </div>
-                <div className="text-xs text-zinc-500">kcal per day</div>
+                <div className="text-xs flow-muted">kcal per day</div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-zinc-900/50 rounded-2xl p-4 border border-zinc-800">
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Protein</div>
-                  <div className="text-xl font-black text-white">{calculatedTargets.proteinGrams}g</div>
+                <div className="flow-surface rounded-2xl p-4 border flow-outline">
+                  <div className="text-xs flow-muted uppercase tracking-wider mb-1">Protein</div>
+                  <div className="text-xl font-black flow-text">{calculatedTargets.proteinGrams}g</div>
                 </div>
 
-                <div className="bg-zinc-900/50 rounded-2xl p-4 border border-zinc-800">
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Carbs</div>
-                  <div className="text-xl font-black text-white">{calculatedTargets.carbsGrams}g</div>
+                <div className="flow-surface rounded-2xl p-4 border flow-outline">
+                  <div className="text-xs flow-muted uppercase tracking-wider mb-1">Carbs</div>
+                  <div className="text-xl font-black flow-text">{calculatedTargets.carbsGrams}g</div>
                 </div>
 
-                <div className="bg-zinc-900/50 rounded-2xl p-4 border border-zinc-800">
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Fat</div>
-                  <div className="text-xl font-black text-white">{calculatedTargets.fatGrams}g</div>
+                <div className="flow-surface rounded-2xl p-4 border flow-outline">
+                  <div className="text-xs flow-muted uppercase tracking-wider mb-1">Fat</div>
+                  <div className="text-xl font-black flow-text">{calculatedTargets.fatGrams}g</div>
                 </div>
               </div>
 
-              <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800">
+              <div className="flow-surface rounded-2xl p-5 border flow-outline">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Droplets className="w-5 h-5 text-blue-400" />
-                    <span className="font-bold text-white">Water</span>
+                    <Droplets className="w-5 h-5 text-[var(--flow-progress)]" />
+                    <span className="font-bold flow-text">Water</span>
                   </div>
-                  <span className="text-2xl font-black text-white">8</span>
+                  <span className="text-2xl font-display font-black flow-text">8</span>
                 </div>
-                <div className="text-xs text-zinc-500">glasses per day</div>
+                <div className="text-xs flow-muted">glasses per day</div>
               </div>
 
-              <p className="text-xs text-zinc-600 text-center">
+              <p className="text-xs flow-muted text-center">
                 You can edit these targets anytime in Settings
               </p>
             </div>
           ) : (
             <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+              <div className="w-8 h-8 rounded-full border-4 border-[rgba(31,29,40,0.16)] border-t-[var(--flow-progress)] animate-spin" />
             </div>
           )}
         </div>
@@ -563,14 +588,20 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
   const handleComplete = async () => {
     if (!calculatedTargets) return;
 
-    const weightKg = weightUnit === "lbs" ? weight * 0.453592 : weight;
-    const heightCmValue = heightUnit === "ft" ? (heightFt * 30.48) + (heightIn * 2.54) : heightCm;
+    const weightNum = parseFloat(weight) || 170;
+    const heightFtNum = parseFloat(heightFt) || 5;
+    const heightInNum = parseFloat(heightIn) || 9;
+    const heightCmNum = parseFloat(heightCm) || 175;
+    const ageNum = parseInt(age) || 25;
+
+    const weightKg = weightUnit === "lbs" ? weightNum * 0.453592 : weightNum;
+    const heightCmValue = heightUnit === "ft" ? (heightFtNum * 30.48) + (heightInNum * 2.54) : heightCmNum;
 
     await completeOnboarding({
       clerkId,
       weightUnit,
       distanceUnit: "miles",
-      age,
+      age: ageNum,
       gender,
       heightCm: heightCmValue,
       weightKg,
@@ -594,7 +625,7 @@ export function OnboardingFlow({ open, onOpenChange, onComplete, clerkId }: Onbo
       open={open}
       onOpenChange={onOpenChange}
       steps={steps}
-      className="w-screen h-[100dvh] max-w-none rounded-none border-0"
+      className="w-screen h-[100dvh] max-w-lg mx-auto rounded-none"
       showCloseButton={false}
       closeOnOverlayClick={false}
       closeOnEscape={false}

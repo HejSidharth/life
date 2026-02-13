@@ -46,6 +46,7 @@ export function PlanSetupFlow({ open, onOpenChange, onComplete }: PlanSetupFlowP
     { id: "intermediate", label: "Intermediate", desc: "Consistent training (1-3 years)" },
     { id: "advanced", label: "Advanced", desc: "Serious lifter (3+ years)" },
   ];
+  const selectedGoalLabel = goals.find((entry) => entry.id === goal)?.label ?? "Fitness";
 
   const steps: Step[] = [
     {
@@ -53,9 +54,9 @@ export function PlanSetupFlow({ open, onOpenChange, onComplete }: PlanSetupFlowP
       title: "Training Goal",
       content: (
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">What&apos;s your goal?</h2>
-            <p className="text-zinc-500 font-medium text-center italic">We&apos;ll tailor your plan based on this.</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">What&apos;s your goal?</h2>
+            <p className="flow-muted font-medium italic">We&apos;ll tailor your plan based on this.</p>
           </div>
           <div className="space-y-3">
             {goals.map((g) => (
@@ -65,12 +66,12 @@ export function PlanSetupFlow({ open, onOpenChange, onComplete }: PlanSetupFlowP
                 className={cn(
                   "w-full p-6 rounded-3xl border text-left transition-all active:scale-[0.98] flex flex-col gap-1 group",
                   goal === g.id
-                    ? "bg-white text-black border-white"
-                    : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                    ? "flow-cta text-white border-transparent"
+                    : "flow-surface flow-outline flow-text hover:opacity-95"
                 )}
               >
                 <div className="font-bold text-lg leading-tight">{g.label}</div>
-                <div className={cn("text-xs mt-0.5", goal === g.id ? "text-black/60" : "text-zinc-600")}>{g.desc}</div>
+                <div className={cn("text-xs mt-0.5", goal === g.id ? "text-white/70" : "flow-muted")}>{g.desc}</div>
               </button>
             ))}
           </div>
@@ -82,9 +83,9 @@ export function PlanSetupFlow({ open, onOpenChange, onComplete }: PlanSetupFlowP
       title: "Experience Level",
       content: (
         <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">Your experience?</h2>
-            <p className="text-zinc-500 font-medium text-center italic">Choose the tier that matches your history.</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">Your experience?</h2>
+            <p className="flow-muted font-medium italic">Choose the tier that matches your history.</p>
           </div>
           <div className="space-y-3">
             {levels.map((l) => (
@@ -94,12 +95,12 @@ export function PlanSetupFlow({ open, onOpenChange, onComplete }: PlanSetupFlowP
                 className={cn(
                   "w-full p-6 rounded-3xl border text-left transition-all active:scale-[0.98] group",
                   level === l.id
-                    ? "bg-white text-black border-white"
-                    : "bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                    ? "flow-cta text-white border-transparent"
+                    : "flow-surface flow-outline flow-text hover:opacity-95"
                 )}
               >
                 <div className="font-bold text-xl leading-tight">{l.label}</div>
-                <div className={cn("text-xs mt-1", level === l.id ? "text-black/60" : "text-zinc-600")}>{l.desc}</div>
+                <div className={cn("text-xs mt-1", level === l.id ? "text-white/70" : "flow-muted")}>{l.desc}</div>
               </button>
             ))}
           </div>
@@ -111,26 +112,27 @@ export function PlanSetupFlow({ open, onOpenChange, onComplete }: PlanSetupFlowP
       title: "Weekly Schedule",
       content: (
         <div className="space-y-10">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black tracking-tight text-white text-center">How many days?</h2>
-            <p className="text-zinc-500 font-medium text-center italic">Select your preferred training frequency.</p>
+          <div className="flow-prompt-card space-y-2 text-center">
+            <h2 className="text-3xl font-display font-black tracking-tight flow-text">How many days?</h2>
+            <p className="flow-muted font-medium italic">Select your preferred training frequency.</p>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+
+          <div className="mx-auto flex w-full max-w-[15rem] flex-col gap-2">
             {[2, 3, 4, 5, 6].map((num) => (
               <button
                 key={num}
                 onClick={() => setDays(num)}
                 className={cn(
-                  "h-24 rounded-3xl border text-2xl font-black transition-all active:scale-95 flex flex-col items-center justify-center gap-1",
+                  "h-14 rounded-2xl border text-2xl font-display font-black transition-all active:scale-95",
                   days === num
-                    ? "bg-white text-black border-white shadow-[0_0_30px_rgba(255,255,255,0.1)]"
-                    : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700"
+                    ? "flow-cta text-white border-transparent"
+                    : "flow-surface flow-outline flow-text"
                 )}
               >
-                <span>{num}</span>
-                <span className="text-[10px] uppercase tracking-widest opacity-60">Days / Week</span>
+                {num}
               </button>
             ))}
+            <p className="pt-2 text-center text-sm flow-muted">{days} days per week selected</p>
           </div>
         </div>
       )
@@ -139,39 +141,48 @@ export function PlanSetupFlow({ open, onOpenChange, onComplete }: PlanSetupFlowP
 
   // Handle skip - close wizard immediately
   const handleSkip = () => {
-    onOpenChange(false);
+    handleOpenChange(false);
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setShowCelebration(false);
+    }
+    onOpenChange(nextOpen);
   };
 
   if (showCelebration) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent
-          className="w-screen h-[100dvh] max-w-none rounded-none border-0 flex flex-col gap-0 p-0 overflow-hidden bg-black"
+          className="flow-theme flow-bg w-screen h-[100dvh] max-w-none rounded-none bg-background flex flex-col gap-0 p-0 overflow-hidden"
           showCloseButton={false}
           closeOnOverlayClick={false}
           closeOnEscape={false}
         >
           {/* Exit Button */}
           <button
-            onClick={() => onOpenChange(false)}
-            className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-zinc-900/80 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all active:scale-95"
+            onClick={() => handleOpenChange(false)}
+            className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full flow-surface border flow-outline flex items-center justify-center flow-muted hover:opacity-90 transition-all active:scale-95"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
           
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-black tracking-tight leading-tight">
+            <div className="flow-prompt-card space-y-4">
+              <h1 className="text-4xl font-display font-black tracking-tight leading-tight flow-text">
                 Plan Generated!
               </h1>
-                <p className="text-zinc-500 text-lg font-medium max-w-xs mx-auto leading-relaxed">
-                Your personalized {days}-day {goal} plan is ready for you.
+                <p className="flow-muted text-lg font-medium max-w-xs mx-auto leading-relaxed">
+                Your personalized {days}-day {selectedGoalLabel} plan is ready for you.
                 </p>
             </div>
             <Button
-              onClick={() => onOpenChange(false)}
-              className="w-full h-16 rounded-[2rem] bg-white text-black hover:bg-zinc-200 text-lg font-bold"
+              onClick={() => handleOpenChange(false)}
+              variant="pillPrimary"
+              size="pill"
+              className="font-display w-full max-w-[20rem]"
             >
               Let&apos;s Crush It
             </Button>
@@ -184,9 +195,9 @@ export function PlanSetupFlow({ open, onOpenChange, onComplete }: PlanSetupFlowP
   return (
     <FlowWizard
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       steps={steps}
-      className="w-screen h-[100dvh] max-w-none rounded-none border-0"
+      className="w-screen h-[100dvh] max-w-lg mx-auto rounded-none"
       showCloseButton={true}
       closeOnOverlayClick={false}
       closeOnEscape={false}

@@ -2,14 +2,13 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState, Suspense } from "react";
-import { 
-  ChevronRight
-} from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
 import { useActiveDate } from "@/hooks/use-active-date";
+import { getDayPhase } from "@/lib/dayPhase";
 import { Button } from "@/components/ui/button";
+import { Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -27,6 +26,7 @@ import { NewWorkoutFlow } from "@/components/workout/NewWorkoutFlow";
 import { WorkoutStarterDialog } from "@/components/workout/WorkoutStarterDialog";
 import { WorkoutProgressHero } from "@/components/workout/WorkoutProgressHero";
 import { ExerciseLibraryItem, Workout } from "@/types/workout";
+import { MascotSceneHero } from "@/components/dashboard/MascotSceneHero";
 import { format } from "date-fns";
 import type { Id } from "convex/_generated/dataModel";
 
@@ -102,6 +102,7 @@ function ExerciseContent() {
   const userId = user?.id;
 
   const { selectedDate, isToday, getLogTimestamp } = useActiveDate();
+  const dayPhase = getDayPhase();
 
   // Feature D: Full history toggle (must be before query that uses it)
   const [showFullHistory, setShowFullHistory] = useState(false);
@@ -129,6 +130,10 @@ function ExerciseContent() {
 
   const adherence = useQuery(
     api.plans.getAdherence,
+    userId ? { userId } : "skip"
+  );
+  const streakData = useQuery(
+    api.workouts.getWorkoutStreak,
     userId ? { userId } : "skip"
   );
 
@@ -242,6 +247,11 @@ function ExerciseContent() {
   const profileList = (gymProfilesRaw || []) as GymProfileSummary[];
   const defaultProfile = profileList.find((profile) => profile.isDefault);
   const adherenceStats = adherence as AdherenceStats | undefined;
+  const boltSlots = 4;
+  const activeBolts = Math.min(
+    boltSlots,
+    Math.max(0, streakData?.streak ? Math.ceil(streakData.streak / 3) : 0)
+  );
 
   useEffect(() => {
     if (!userId || hasAutoSeededLibrary || exerciseLibraryRaw === undefined) {
@@ -390,30 +400,37 @@ function ExerciseContent() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={springTransition}
-      >
-        <h1 className="text-3xl font-bold tracking-tight">
-          {isToday ? "Workouts" : format(selectedDate, "EEEE")}
-        </h1>
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground mt-1">
-            {isToday ? "Track your progress and hit new PRs." : format(selectedDate, "MMMM do, yyyy")}
-          </p>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-zinc-500 hover:text-white"
-            onClick={() => setShowPlanSetupDialog(true)}
-          >
-            Plan Setup
-          </Button>
-        </div>
-      </motion.div>
+    <div className="space-y-6 pb-10">
+      <MascotSceneHero
+        sceneKey="exercise"
+        title={isToday ? "Workouts" : format(selectedDate, "EEEE")}
+        subtitle={isToday ? `${dayPhase} · Build strength` : format(selectedDate, "MMMM do, yyyy")}
+        dateLabel={format(selectedDate, "yyyy")}
+        showMascot={false}
+        sceneMode="sky"
+        compact
+        minHeight="10.375rem"
+        skyColor="#2f63bf"
+        className="pt-3"
+        footer={(
+          <div className="mt-1 flex items-center justify-start gap-2">
+            {Array.from({ length: boltSlots }).map((_, index) => (
+              <Zap
+                key={`bolt-${index}`}
+                className={`h-5 w-5 ${
+                  index < activeBolts
+                    ? "fill-[#ffd45a] text-[#ffd45a]"
+                    : "text-white/45"
+                }`}
+                strokeWidth={2.5}
+              />
+            ))}
+            <span className="ml-1 text-base font-black text-white">
+              {streakData?.streak || 0}
+            </span>
+          </div>
+        )}
+      />
 
       {/* Progress Hero (BitePal Style) */}
       <motion.div
@@ -425,43 +442,40 @@ function ExerciseContent() {
       </motion.div>
 
       {planSummary?.hasSession && (
-        <Card className="border-border/40 bg-zinc-950/50">
-          <CardContent className="p-4 space-y-3">
+        <section className="rounded-[1.75rem] border border-border bg-card p-4">
+          <div className="space-y-3">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-semibold text-zinc-100">Today&apos;s Session: {planSummary.dayName}</h3>
-                <p className="text-xs text-zinc-500">
+                <h3 className="text-xl font-black text-foreground">Today&apos;s Session: {planSummary.dayName}</h3>
+                <p className="text-xs font-semibold text-muted-foreground">
                   {planSummary.focus} · {planSummary.estimatedMinutes} min · {planSummary.prescriptions.length} prescriptions
                 </p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setShowPlanSetupDialog(true)}>
-                Adjust Plan
-              </Button>
             </div>
             <div className="space-y-2">
               {planSummary.prescriptions.slice(0, 4).map((prescription) => (
-                <div key={prescription._id} className="flex items-center justify-between text-xs bg-zinc-900/60 rounded-xl px-3 py-2">
-                  <span className="text-zinc-200">{prescription.exerciseName}</span>
-                  <span className="text-zinc-500">
+                <div key={prescription._id} className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2 text-xs">
+                  <span className="font-bold text-foreground">{prescription.exerciseName}</span>
+                  <span className="font-semibold text-muted-foreground">
                     {prescription.targetSets} x {prescription.targetReps}
                   </span>
                 </div>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
 
 
 
       {/* Templates Section */}
-      <div className="space-y-4">
+      <section className="space-y-4 rounded-[1.75rem] border border-border bg-card p-4">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-lg font-semibold">Templates</h2>
+          <h2 className="text-lg font-black text-foreground">Templates</h2>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="text-primary hover:bg-white/5"
+            className="rounded-full border-border bg-background font-black uppercase tracking-wider"
             onClick={() => setShowRoutineWizard(true)}
           >
             New
@@ -469,41 +483,40 @@ function ExerciseContent() {
         </div>
 
         {templates.length === 0 ? (
-          <div className="p-8 text-center bg-card rounded-3xl border border-dashed border-zinc-800">
-            <p className="text-sm text-muted-foreground">Save your workouts as templates to quickly reuse them.</p>
+          <div className="rounded-3xl border border-dashed border-border bg-background p-8 text-center">
+            <p className="text-sm font-semibold text-muted-foreground">Save your workouts as templates to quickly reuse them.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {templates.map((template) => (
               <div key={template._id}>
                 <Card
-                  className="cursor-pointer overflow-hidden bg-card border-border/50 hover:border-white/20 transition-all shadow-sm"
+                  className="cursor-pointer overflow-hidden rounded-2xl border border-border bg-background transition-opacity hover:opacity-90"
                   onClick={() => handleStartTemplate(template._id)}
                 >
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div>
-                      <h3 className="font-semibold text-white">{template.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <h3 className="font-black text-foreground">{template.name}</h3>
+                      <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
                         {template.exercises.length} exercises
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-zinc-600" />
                 </CardContent>
                 </Card>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       {/* Recent History */}
-      <div className="space-y-4">
+      <section className="space-y-4 rounded-[1.75rem] border border-border bg-card p-4">
         <div className="flex items-center justify-between px-1">
-          <h2 className="text-lg font-semibold">Recent History</h2>
+          <h2 className="text-lg font-black text-foreground">Recent History</h2>
           <button
-            className="text-sm text-muted-foreground flex items-center hover:text-foreground transition-colors"
+            className="rounded-full border border-border bg-background px-3 py-1 text-xs font-black uppercase tracking-wider text-muted-foreground transition-opacity hover:opacity-90"
             onClick={() => setShowFullHistory(!showFullHistory)}
           >
             {showFullHistory ? "Show Less" : "Full History"}
@@ -512,20 +525,22 @@ function ExerciseContent() {
 
         <div className="space-y-2">
           {recentWorkouts.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No completed workouts yet.</p>
+            <p className="rounded-2xl border border-border bg-background py-8 text-center text-sm font-semibold text-muted-foreground">
+              No completed workouts yet.
+            </p>
           ) : (
             recentWorkouts.map((workout) => (
               <div key={workout._id}>
                 <Card
-                  className="border-border/40 bg-zinc-950/50 cursor-pointer hover:border-white/10 transition-colors"
+                  className="cursor-pointer rounded-2xl border border-border bg-background transition-opacity hover:opacity-90"
                   onClick={() => setDetailWorkoutId(workout._id)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div>
-                          <h3 className="font-medium text-zinc-200">{workout.name}</h3>
-                          <p className="text-xs text-zinc-500">
+                          <h3 className="font-black text-foreground">{workout.name}</h3>
+                          <p className="text-xs font-semibold text-muted-foreground">
                             {format(new Date(workout.completedAt), "eee, MMM d")} · {workout.duration}m
                           </p>
                         </div>
@@ -533,11 +548,11 @@ function ExerciseContent() {
 
                       <div className="text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          <span className="text-xs font-bold text-zinc-300">
+                          <span className="text-xs font-black text-foreground">
                             {workout.totalVolume.toLocaleString()} lbs
                           </span>
                         </div>
-                        <p className="text-[10px] text-zinc-600 mt-1 uppercase tracking-wider font-bold">
+                        <p className="mt-1 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                           {workout.exerciseCount} Exercises
                         </p>
                       </div>
@@ -548,7 +563,7 @@ function ExerciseContent() {
             ))
           )}
         </div>
-      </div>
+      </section>
 
       {/* Workout Detail Dialog (Feature C) */}
       <WorkoutDetailDialog
@@ -636,7 +651,7 @@ function ExerciseContent() {
 
 export default function ExercisePage() {
   return (
-    <Suspense fallback={<div className="w-full h-32 animate-pulse bg-zinc-900 rounded-3xl" />}>
+    <Suspense fallback={<div className="w-full h-32 animate-pulse bg-secondary rounded-3xl" />}>
       <ExerciseContent />
     </Suspense>
   );

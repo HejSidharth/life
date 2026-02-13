@@ -7,8 +7,6 @@ import { useMemo, useState } from "react";
 import { 
   Dialog, 
   DialogContent, 
-  DialogHeader, 
-  DialogTitle,
   DialogTrigger 
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -38,7 +36,7 @@ export function CalendarStrip({ selectedDate, onDateChange }: CalendarStripProps
     <div className="w-full space-y-4">
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold tracking-tight text-zinc-300 capitalize">
+          <span className="text-sm font-bold tracking-tight text-foreground capitalize">
             {format(selectedDate, "MMMM yyyy")}
           </span>
         </div>
@@ -46,7 +44,7 @@ export function CalendarStrip({ selectedDate, onDateChange }: CalendarStripProps
         <div className="flex items-center gap-2">
           <button
             onClick={() => onDateChange(subDays(selectedDate, 1))}
-            className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white px-2 py-1 transition-colors"
+            className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground px-2 py-1 transition-colors"
           >
             Prev
           </button>
@@ -55,7 +53,7 @@ export function CalendarStrip({ selectedDate, onDateChange }: CalendarStripProps
           
           <button
             onClick={() => onDateChange(addDays(selectedDate, 1))}
-            className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white px-2 py-1 transition-colors"
+            className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground px-2 py-1 transition-colors"
           >
             Next
           </button>
@@ -74,15 +72,15 @@ export function CalendarStrip({ selectedDate, onDateChange }: CalendarStripProps
               className={cn(
                 "flex-1 flex flex-col items-center py-3 rounded-2xl transition-all relative",
                 isSelected 
-                  ? "bg-white text-black shadow-lg" 
-                  : "bg-zinc-900/50 text-zinc-500 hover:bg-zinc-800"
+                  ? "bg-primary text-primary-foreground shadow-lg" 
+                  : "bg-secondary text-muted-foreground hover:bg-muted"
               )}
               whileTap={{ scale: 0.95 }}
               transition={springTransition}
             >
               <span className={cn(
                 "text-[10px] font-black uppercase tracking-widest mb-1",
-                isSelected ? "text-black/60" : "text-zinc-600"
+                isSelected ? "text-primary-foreground/70" : "text-muted-foreground"
               )}>
                 {format(day, "eee")}
               </span>
@@ -91,14 +89,7 @@ export function CalendarStrip({ selectedDate, onDateChange }: CalendarStripProps
               </span>
               
               {isToday && !isSelected && (
-                <div className="absolute -top-1 w-1 h-1 bg-zinc-500 rounded-full" />
-              )}
-              {isSelected && (
-                <motion.div
-                  layoutId="active-day-bg"
-                  className="absolute inset-0 bg-white rounded-2xl -z-10"
-                  transition={springTransition}
-                />
+                <div className="absolute -top-1 w-1 h-1 bg-muted-foreground/70 rounded-full" />
               )}
             </motion.button>
           );
@@ -134,11 +125,11 @@ function FullCalendarDialog({ selectedDate, onDateChange }: CalendarStripProps) 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <button className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white px-2 py-1 transition-colors">
+        <button className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground px-2 py-1 transition-colors">
           View All
         </button>
       </DialogTrigger>
-      <DialogContent className="rounded-3xl border-border bg-black p-0 overflow-hidden max-w-sm">
+      <DialogContent className="rounded-3xl border-border bg-background p-0 overflow-hidden max-w-sm">
         <div className="p-6 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-black tracking-tight capitalize">
@@ -148,7 +139,7 @@ function FullCalendarDialog({ selectedDate, onDateChange }: CalendarStripProps) 
               <Button 
                 variant="secondary" 
                 size="sm" 
-                className="h-8 px-3 rounded-xl bg-zinc-900 text-[10px] font-black uppercase tracking-widest"
+                className="h-8 px-3 rounded-xl bg-secondary text-[10px] font-black uppercase tracking-widest"
                 onClick={() => setCurrentMonth(subDays(startOfMonth(currentMonth), 1))}
               >
                 Prev
@@ -156,7 +147,7 @@ function FullCalendarDialog({ selectedDate, onDateChange }: CalendarStripProps) 
               <Button 
                 variant="secondary" 
                 size="sm" 
-                className="h-8 px-3 rounded-xl bg-zinc-900 text-[10px] font-black uppercase tracking-widest"
+                className="h-8 px-3 rounded-xl bg-secondary text-[10px] font-black uppercase tracking-widest"
                 onClick={() => setCurrentMonth(addDays(endOfMonth(currentMonth), 1))}
               >
                 Next
@@ -165,8 +156,8 @@ function FullCalendarDialog({ selectedDate, onDateChange }: CalendarStripProps) 
           </div>
 
           <div className="grid grid-cols-7 gap-1">
-            {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
-              <div key={d} className="text-center text-[10px] font-black text-zinc-600 py-2">
+            {["S", "M", "T", "W", "T", "F", "S"].map((d, index) => (
+              <div key={`${d}-${index}`} className="text-center text-[10px] font-black text-muted-foreground py-2">
                 {d}
               </div>
             ))}
@@ -186,15 +177,15 @@ function FullCalendarDialog({ selectedDate, onDateChange }: CalendarStripProps) 
                   className={cn(
                     "aspect-square flex items-center justify-center rounded-xl text-sm font-bold transition-all relative",
                     isSelected 
-                      ? "bg-white text-black" 
+                      ? "bg-primary text-primary-foreground" 
                       : isToday 
-                        ? "bg-zinc-800 text-white" 
-                        : "text-zinc-400 hover:bg-zinc-900"
+                        ? "bg-muted text-foreground" 
+                        : "text-muted-foreground hover:bg-secondary"
                   )}
                 >
                   {day.getDate()}
                   {isToday && !isSelected && (
-                    <div className="absolute bottom-1.5 w-1 h-1 bg-white rounded-full" />
+                    <div className="absolute bottom-1.5 w-1 h-1 bg-card rounded-full" />
                   )}
                 </button>
               );

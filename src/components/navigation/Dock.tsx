@@ -148,7 +148,7 @@ export function Dock() {
     >
       <div 
         className={cn(
-          "relative overflow-hidden h-16 rounded-3xl bg-zinc-900/80 border border-white/5 backdrop-blur-xl shadow-2xl",
+          "relative overflow-hidden h-16 rounded-[1.75rem] bg-card border border-border",
           isWizardOpen ? "pointer-events-none" : "pointer-events-auto"
         )}
         style={{ width: isWorkoutPage ? `${DOCK_WIDTH}px` : "auto" }}
@@ -195,7 +195,7 @@ export function Dock() {
               <div className="w-8 shrink-0" aria-hidden />
               <button
                 onClick={handleActionClick}
-                className="flex-1 h-11 rounded-2xl bg-white text-black flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-[0.2em] shadow-lg active:scale-95 transition-transform"
+                className="flex-1 h-11 rounded-2xl border border-border bg-foreground text-background flex items-center justify-center gap-2 font-black uppercase text-[10px] tracking-[0.2em] active:scale-95 transition-transform"
                 type="button"
               >
                 <Plus className="w-4 h-4" strokeWidth={3} />
@@ -211,7 +211,7 @@ export function Dock() {
             aria-label={mode === "nav" ? "Show workout action" : "Show navigation"}
             onClick={toggleMode}
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 h-10 w-10 rounded-xl bg-zinc-800/95 border border-white/10 text-zinc-200 hover:bg-zinc-700 transition-colors flex items-center justify-center",
+              "absolute top-1/2 -translate-y-1/2 h-10 w-10 rounded-xl bg-secondary border border-border text-foreground hover:opacity-90 transition-opacity flex items-center justify-center",
               mode === "nav" ? "right-2" : "left-2"
             )}
           >
@@ -248,20 +248,20 @@ function DockIcon({ href, icon: Icon, label, isActive, suppressTap }: {
         className={cn(
           "relative flex h-11 w-11 items-center justify-center rounded-2xl transition-colors duration-200",
           isActive 
-            ? "bg-white text-black" 
-            : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
+            ? "bg-foreground text-background" 
+            : "bg-secondary text-muted-foreground hover:bg-secondary hover:text-foreground"
         )}
       >
         <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
         
         {/* Simple Static Tooltip on hover (CSS only) */}
-        <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg bg-zinc-800 border border-white/10 text-white text-[10px] font-bold uppercase tracking-widest whitespace-nowrap pointer-events-none hidden group-hover:block">
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 rounded-lg bg-muted border border-border text-foreground text-[10px] font-bold uppercase tracking-widest whitespace-nowrap pointer-events-none hidden group-hover:block">
           {label}
         </div>
 
         {/* Active Dot */}
         {isActive && (
-          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
+          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-foreground rounded-full" />
         )}
       </div>
     </Link>

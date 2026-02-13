@@ -22,7 +22,7 @@ export function CircularProgress({
   className,
   showPercentage = true,
   icon,
-  color = "hsl(0, 0%, 98%)",
+  color = "hsl(var(--primary))",
 }: CircularProgressProps) {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -42,7 +42,7 @@ export function CircularProgress({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(255, 255, 255, 0.08)"
+          stroke="hsl(var(--border))"
           strokeWidth={strokeWidth}
         />
         
@@ -64,7 +64,7 @@ export function CircularProgress({
             damping: 20,
           }}
           style={{
-            filter: `drop-shadow(0 0 6px ${color}40)`,
+            filter: "drop-shadow(0 0 6px hsl(var(--primary) / 0.2))",
           }}
         />
       </svg>
@@ -124,7 +124,7 @@ export function WidgetCard({
   subtitle,
   icon,
   progress,
-  color = "hsl(0, 0%, 98%)",
+  color = "hsl(var(--primary))",
   onClick,
   className,
 }: WidgetCardProps) {

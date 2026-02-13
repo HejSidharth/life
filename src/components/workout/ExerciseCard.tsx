@@ -92,7 +92,7 @@ export function ExerciseCard({
                   {completedSets.length}/{exercise.sets.length} sets
                   {totalVolume > 0 && ` · ${totalVolume.toLocaleString()} vol`}
                   {prSets.length > 0 && (
-                    <span className="text-white ml-1 font-bold">
+                    <span className="text-foreground ml-1 font-bold">
                       {prSets.length} PR{prSets.length > 1 ? "s" : ""}
                     </span>
                   )}
@@ -106,7 +106,7 @@ export function ExerciseCard({
             <button
               type="button"
               onClick={() => setShowMenu(!showMenu)}
-              className="h-8 w-8 flex items-center justify-center text-zinc-600 hover:text-zinc-300 transition-colors rounded-lg hover:bg-zinc-800/50"
+              className="h-8 w-8 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                 <circle cx="8" cy="3" r="1.25" />
@@ -124,7 +124,7 @@ export function ExerciseCard({
                   onClick={() => setShowMenu(false)}
                   aria-label="Close menu"
                 />
-                <div className="absolute right-0 top-full mt-1 z-50 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl py-1 min-w-[140px]">
+                <div className="absolute right-0 top-full mt-1 z-50 bg-secondary border border-border rounded-xl shadow-xl py-1 min-w-[140px]">
                   {onViewHistory && (
                     <button
                       type="button"
@@ -132,7 +132,7 @@ export function ExerciseCard({
                         onViewHistory();
                         setShowMenu(false);
                       }}
-                      className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors"
+                      className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     >
                       History
                     </button>
@@ -144,7 +144,7 @@ export function ExerciseCard({
                         onViewTechnique(exercise.techniqueUrl as string);
                         setShowMenu(false);
                       }}
-                      className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 transition-colors"
+                      className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     >
                       Technique
                     </button>
@@ -155,7 +155,7 @@ export function ExerciseCard({
                       handleRemove();
                       setShowMenu(false);
                     }}
-                    className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-destructive hover:text-destructive/80 hover:bg-zinc-800/50 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-destructive hover:text-destructive/80 hover:bg-muted transition-colors"
                   >
                     Remove
                   </button>
@@ -210,7 +210,7 @@ export function ExerciseCard({
                   : undefined
               );
             }}
-            className="w-full mt-3 h-10 rounded-2xl border-zinc-800 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 hover:text-white"
+            className="w-full mt-3 h-10 rounded-2xl border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
           >
             + Add Set
           </Button>
@@ -218,7 +218,7 @@ export function ExerciseCard({
           {/* Finish Exercise — collapses the card */}
           <Button
             onClick={onToggleExpand}
-            className="w-full mt-1 h-10 rounded-2xl bg-white text-black hover:bg-zinc-200 text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
+            className="w-full mt-1 h-10 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
           >
             Finish Exercise
           </Button>

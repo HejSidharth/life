@@ -11,6 +11,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "convex/_generated/api";
 import { useUser, UserButton, SignedIn } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
+import { getDayPhase } from "@/lib/dayPhase";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -23,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { generateApiKey, hashApiKey } from "@/lib/utils";
+import { MascotSceneHero } from "@/components/dashboard/MascotSceneHero";
 import type { Id } from "convex/_generated/dataModel";
 
 type GoalType = "calories" | "protein" | "carbs" | "fat" | "water" | "exercise_minutes";
@@ -45,6 +47,7 @@ const goalLabels: Record<GoalType, { label: string; unit: string }> = {
 function SettingsContent() {
   const { user } = useUser();
   const userId = user?.id;
+  const dayPhase = getDayPhase();
 
   // Convex Queries
   const goalsData = useQuery(api.stats.getTodayStats, userId ? { userId } : "skip") as any;
@@ -105,30 +108,30 @@ function SettingsContent() {
 
   return (
     <div className="space-y-8 pb-10">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={springTransition}
-      >
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-1">Configure your experience.</p>
-      </motion.div>
+      <MascotSceneHero
+        sceneKey="settings"
+        title="Settings"
+        subtitle={`${dayPhase} · Configure your experience.`}
+        showMascot={false}
+        sceneMode="sky"
+        compact
+        skyColor="#2c5cad"
+      />
 
       {/* Account Info */}
-      <Card className="border-0 bg-zinc-900/30">
+      <Card className="border-0 bg-secondary">
         <CardContent className="p-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div>
               <h2 className="text-xl font-bold">{user?.fullName || "Your Account"}</h2>
-              <p className="text-sm text-zinc-500">{user?.primaryEmailAddress?.emailAddress}</p>
+              <p className="text-sm text-muted-foreground">{user?.primaryEmailAddress?.emailAddress}</p>
             </div>
           </div>
           <SignedIn>
             <UserButton
               appearance={{
                 elements: {
-                  avatarBox: "w-12 h-12 ring-2 ring-white/10 ring-offset-4 ring-offset-black",
+                  avatarBox: "w-12 h-12 ring-2 ring-border ring-offset-4 ring-offset-background",
                 },
               }}
             />
@@ -146,7 +149,7 @@ function SettingsContent() {
             variant="ghost" 
             size="sm" 
             onClick={() => setIsGoalDialogOpen(true)}
-            className="text-zinc-400 hover:text-white"
+            className="text-muted-foreground hover:text-foreground"
           >
             Add
           </Button>
@@ -155,15 +158,15 @@ function SettingsContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {Object.entries(activeGoals).map(([type, target]: [any, any]) => (
             <motion.div key={type} whileHover={{ scale: 1.02 }} transition={springTransition}>
-              <Card className="border-0 bg-zinc-950/50 hover:bg-zinc-900/50 transition-all cursor-pointer shadow-sm border border-white/5">
+              <Card className="border-0 bg-secondary hover:bg-secondary transition-all cursor-pointer border border-border/70">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                       {goalLabels[type as GoalType]?.label || type}
                     </p>
                     <p className="text-xl font-black mt-0.5">
                       {target}
-                      <span className="text-sm font-bold text-zinc-500 ml-1">
+                      <span className="text-sm font-bold text-muted-foreground ml-1">
                         {goalLabels[type as GoalType]?.unit}
                       </span>
                     </p>
@@ -185,7 +188,7 @@ function SettingsContent() {
             variant="ghost" 
             size="sm" 
             onClick={() => setIsApiKeyDialogOpen(true)}
-            className="text-zinc-400 hover:text-white"
+            className="text-muted-foreground hover:text-foreground"
           >
             Create
           </Button>
@@ -193,24 +196,24 @@ function SettingsContent() {
 
         <div className="space-y-2">
           {apiKeys.length === 0 ? (
-            <p className="text-sm text-zinc-500 text-center py-8 bg-zinc-950/30 rounded-3xl border border-zinc-900/50">
+            <p className="text-sm text-muted-foreground text-center py-8 bg-secondary rounded-3xl border border-border">
               No API keys created yet.
             </p>
           ) : (
             apiKeys.map((key: any) => (
-              <Card key={key._id} className="border-0 bg-zinc-950/50 shadow-sm border border-white/5 group">
+              <Card key={key._id} className="border-0 bg-secondary border border-border/70 group">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div>
-                      <h3 className="font-semibold text-zinc-200">{key.name}</h3>
-                      <p className="text-xs text-zinc-500 font-mono">
+                      <h3 className="font-semibold text-foreground">{key.name}</h3>
+                      <p className="text-xs text-muted-foreground font-mono">
                         {key.keyPrefix}... · Created {new Date(key.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                   <button 
                     onClick={() => revokeApiKey({ id: key._id as Id<"apiKeys"> })}
-                    className="h-8 px-2 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                    className="h-8 px-2 rounded-lg flex items-center justify-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
                   >
                     Revoke
                   </button>
@@ -222,19 +225,19 @@ function SettingsContent() {
       </div>
 
       {/* Developer Documentation */}
-      <Card className="border-0 bg-zinc-900/10 border border-white/5">
+      <Card className="border-0 bg-secondary/70 border border-border/70">
         <CardContent className="p-6 space-y-4">
           <h3 className="text-lg font-bold flex items-center gap-2">
             OpenClaw & API Access
           </h3>
-          <p className="text-sm text-zinc-500 leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             Access your data from any application using your private API keys. Perfect for integration with OpenClaw health analysis.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" className="bg-zinc-800 hover:bg-zinc-700 rounded-xl text-xs font-bold">
+            <Button variant="secondary" size="sm" className="bg-muted hover:bg-muted rounded-xl text-xs font-bold">
               View API Docs
             </Button>
-            <Button variant="ghost" size="sm" className="text-zinc-500 hover:text-white text-xs font-bold">
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground text-xs font-bold">
               OpenClaw Setup
             </Button>
           </div>
@@ -243,17 +246,17 @@ function SettingsContent() {
 
       {/* Goal Dialog */}
       <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
-        <DialogContent className="rounded-3xl border-border bg-card shadow-2xl">
+        <DialogContent className="rounded-3xl border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">Set Goal</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleGoalSubmit} className="space-y-5 py-4">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Goal Type</Label>
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Goal Type</Label>
               <Select
                 value={goalFormData.type}
                 onChange={(e) => setGoalFormData({ ...goalFormData, type: e.target.value as GoalType })}
-                className="h-14 rounded-2xl bg-zinc-900 border-0"
+                className="h-14 rounded-2xl bg-secondary border-0"
               >
                 {Object.entries(goalLabels).map(([key, { label }]) => (
                   <option key={key} value={key}>{label}</option>
@@ -262,20 +265,20 @@ function SettingsContent() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">
+              <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">
                 Target ({goalLabels[goalFormData.type].unit})
               </Label>
               <Input
                 type="number"
                 value={goalFormData.target}
                 onChange={(e) => setGoalFormData({ ...goalFormData, target: e.target.value })}
-                className="h-14 rounded-2xl bg-zinc-900 border-0 text-lg font-bold"
+                className="h-14 rounded-2xl bg-secondary border-0 text-lg font-bold"
                 placeholder="2000"
                 required
               />
             </div>
 
-            <Button type="submit" className="w-full h-14 rounded-2xl bg-white text-black hover:bg-zinc-200 font-bold text-lg">
+            <Button type="submit" className="w-full h-14 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-lg">
               Save Goal
             </Button>
           </form>
@@ -292,7 +295,7 @@ function SettingsContent() {
           setIsApiKeyDialogOpen(true);
         }
       }}>
-        <DialogContent className="rounded-3xl border-border bg-card shadow-2xl">
+        <DialogContent className="rounded-3xl border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold">
               {newApiKey ? "Key Generated" : "New API Key"}
@@ -301,9 +304,9 @@ function SettingsContent() {
           
           {newApiKey ? (
             <div className="space-y-6 py-4 text-center">
-              <div className="p-6 bg-zinc-900 rounded-2xl border border-white/5 relative group">
-                <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-3">Your API Key</p>
-                <code className="text-sm font-mono text-zinc-200 break-all select-all">
+              <div className="p-6 bg-secondary rounded-2xl border border-border/70 relative group">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3">Your API Key</p>
+                <code className="text-sm font-mono text-foreground break-all select-all">
                   {newApiKey}
                 </code>
               </div>
@@ -311,12 +314,12 @@ function SettingsContent() {
               <div className="space-y-3">
                 <Button 
                   onClick={handleCopyKey}
-                  className="w-full h-14 rounded-2xl bg-white text-black hover:bg-zinc-200 font-bold"
+                  className="w-full h-14 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold"
                 >
                   {copied ? <Check className="w-5 h-5 mr-2" /> : <Copy className="w-5 h-5 mr-2" />}
                   {copied ? "Copied!" : "Copy Key"}
                 </Button>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
                   Store this safely. You won&apos;t be able to see it again.
                 </p>
               </div>
@@ -324,16 +327,16 @@ function SettingsContent() {
           ) : (
             <form onSubmit={handleCreateApiKey} className="space-y-5 py-4">
               <div className="space-y-2">
-                <Label className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-1">Key Name</Label>
+                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">Key Name</Label>
                 <Input
                   value={apiKeyName}
                   onChange={(e) => setApiKeyName(e.target.value)}
                   placeholder="My iPhone, OpenClaw, etc."
-                  className="h-14 rounded-2xl bg-zinc-900 border-0 text-lg"
+                  className="h-14 rounded-2xl bg-secondary border-0 text-lg"
                   required
                 />
               </div>
-              <Button type="submit" className="w-full h-14 rounded-2xl bg-white text-black hover:bg-zinc-200 font-bold text-lg">
+              <Button type="submit" className="w-full h-14 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-lg">
                 Generate Key
               </Button>
             </form>

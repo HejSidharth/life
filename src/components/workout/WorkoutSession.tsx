@@ -186,24 +186,24 @@ export function WorkoutSession({
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+          <div className="flex items-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
             <div className="flex items-center gap-1">
               <span>{formatDuration(elapsedSeconds)}</span>
             </div>
             <div>
-              <span className="text-zinc-200">{completedSets}</span>
+              <span className="text-foreground">{completedSets}</span>
               /{totalSets} sets
             </div>
             {totalVolume > 0 && (
               <div>
-                <span className="text-zinc-200">
+                <span className="text-foreground">
                   {totalVolume.toLocaleString()}
                 </span>{" "}
                 vol
               </div>
             )}
             {prCount > 0 && (
-              <div className="text-white">
+              <div className="text-foreground">
                 {prCount} PR{prCount !== 1 ? "s" : ""}
               </div>
             )}
@@ -249,15 +249,15 @@ export function WorkoutSession({
 
       {/* Add Exercise Button */}
       <button
-        className="w-full h-20 rounded-[2.5rem] bg-zinc-900/30 border border-zinc-900 hover:bg-zinc-900/50 hover:border-zinc-800 transition-all flex flex-col items-center justify-center gap-2 group"
+        className="w-full h-20 rounded-[2.5rem] bg-secondary border border-border hover:bg-secondary hover:border-border transition-all flex flex-col items-center justify-center gap-2 group"
         onClick={() => setIsExercisePickerOpen(true)}
       >
-        <div className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800 group-hover:border-zinc-700 group-hover:scale-110 transition-all">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-zinc-500 group-hover:text-zinc-300">
+        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center border border-border group-hover:border-border group-hover:scale-110 transition-all">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted-foreground group-hover:text-foreground">
             <path d="M7 3v8M3 7h8" />
           </svg>
         </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 group-hover:text-zinc-400">
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground group-hover:text-foreground">
           Add Exercise
         </span>
       </button>
@@ -298,13 +298,13 @@ export function WorkoutSession({
 
       {/* Cancel Workout Dialog */}
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent className="rounded-[2.5rem] border-zinc-900 bg-zinc-950 p-8 sm:p-10 max-w-sm mx-auto">
+        <DialogContent className="rounded-[2.5rem] border-border bg-secondary p-8 sm:p-10 max-w-sm mx-auto">
           <DialogHeader className="space-y-4">
             <DialogTitle className="text-2xl font-bold text-center">Cancel Workout?</DialogTitle>
-            <p className="text-sm text-zinc-500 text-center px-2">
+            <p className="text-sm text-muted-foreground text-center px-2">
               This will discard all progress from this workout session.
               {completedSets > 0 && (
-                <span className="block mt-2 text-zinc-400 font-medium">
+                <span className="block mt-2 text-muted-foreground font-medium">
                   You have completed {completedSets} set{completedSets !== 1 ? "s" : ""}.
                 </span>
               )}
@@ -325,7 +325,7 @@ export function WorkoutSession({
             <Button
               variant="secondary"
               onClick={() => setShowCancelDialog(false)}
-              className="h-14 rounded-full text-base font-bold bg-zinc-900 text-zinc-300 hover:bg-zinc-800 transition-all active:scale-95"
+              className="h-14 rounded-full text-base font-bold bg-secondary text-foreground hover:bg-muted transition-all active:scale-95"
             >
               Keep Training
             </Button>

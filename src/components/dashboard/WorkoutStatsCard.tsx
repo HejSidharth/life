@@ -1,18 +1,8 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Flame, Droplets, Utensils, Dumbbell } from "lucide-react";
-import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 
 interface WorkoutStatsCardProps {
-  streak: number;
-  weeklyWorkouts: {
-    _id: string;
-    completedAt: number;
-    totalVolume: number;
-  }[];
-  weeklyGoal: number;
   waterIntake: number;
   waterGoal: number;
   calorieIntake: number;
@@ -20,144 +10,67 @@ interface WorkoutStatsCardProps {
 }
 
 export function WorkoutStatsCard({
-  streak,
-  weeklyWorkouts,
-  weeklyGoal,
   waterIntake,
   waterGoal,
   calorieIntake,
   calorieGoal,
 }: WorkoutStatsCardProps) {
-  // Generate last 7 days for heatmap
-  const today = new Date();
-  const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-
-  const weekDayLabels = ["M", "T", "W", "T", "F", "S", "S"];
-
-  const getWorkoutForDay = (day: Date) => {
-    return weeklyWorkouts.find((w) => {
-      const workoutDate = new Date(w.completedAt);
-      return isSameDay(workoutDate, day);
-    });
-  };
-
-  const workoutsThisWeek = weeklyWorkouts.length;
-  const weeklyProgress = Math.min(workoutsThisWeek / weeklyGoal, 1);
   const waterProgress = Math.min(waterIntake / waterGoal, 1);
   const calorieProgress = Math.min(calorieIntake / calorieGoal, 1);
+  const waterPercent = Math.round(waterProgress * 100);
+  const caloriePercent = Math.round(calorieProgress * 100);
 
   return (
-    <Card className="border-border/40 bg-zinc-950/50">
-      <CardContent className="p-5 space-y-5">
-        {/* Streak Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
-              <Flame className="w-5 h-5 text-orange-500" />
-            </div>
-            <div>
-              <div className="text-2xl font-black text-white">{streak} Day Streak</div>
-              <div className="text-xs text-zinc-500">Keep it going!</div>
-            </div>
-          </div>
+    <Card className="border-border bg-card">
+      <CardContent className="space-y-4 p-5">
+        <div className="rounded-2xl border border-border bg-secondary px-4 py-3">
+          <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+            Today&apos;s Progress
+          </p>
+          <p className="mt-1 text-3xl font-black leading-none text-foreground">
+            {Math.round((waterPercent + caloriePercent) / 2)}%
+            <span className="ml-2 text-base text-muted-foreground">complete</span>
+          </p>
         </div>
 
-        {/* Weekly Heatmap */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-zinc-300">This Week</span>
-            <span className="text-sm text-zinc-500">
-              {workoutsThisWeek}/{weeklyGoal} workouts
-            </span>
-          </div>
-
-          <div className="flex gap-2">
-            {weekDays.map((day, index) => {
-              const workout = getWorkoutForDay(day);
-              const isToday = isSameDay(day, today);
-              const hasWorkout = !!workout;
-
-              return (
-                <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                  <div
-                    className={cn(
-                      "w-full aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all",
-                      hasWorkout
-                        ? "bg-white text-black"
-                        : isToday
-                        ? "bg-zinc-800 border-2 border-zinc-700 text-zinc-500"
-                        : "bg-zinc-900/50 text-zinc-600"
-                    )}
-                  >
-                    {hasWorkout && <Dumbbell className="w-4 h-4" />}
-                  </div>
-                  <span className="text-xs text-zinc-600 font-bold">{weekDayLabels[index]}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Weekly Progress Bar */}
-          <div className="space-y-1">
-            <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
+          <div className="rounded-2xl border border-border bg-secondary p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-black text-foreground">Water</span>
+              <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+                {waterPercent}%
+              </span>
+            </div>
+            <p className="text-2xl font-black leading-none text-foreground">
+              {waterIntake}
+              <span className="ml-1 text-sm text-muted-foreground">/ {waterGoal} glasses</span>
+            </p>
+            <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full bg-white rounded-full transition-all"
-                style={{ width: `${weeklyProgress * 100}%` }}
+                className="h-full rounded-full bg-accent transition-all"
+                style={{ width: `${waterPercent}%` }}
               />
             </div>
-            <div className="flex justify-between text-xs text-zinc-500">
-              <span>{Math.round(weeklyProgress * 100)}% of weekly goal</span>
-              <span>{weeklyGoal - workoutsThisWeek > 0 ? `${weeklyGoal - workoutsThisWeek} more to go` : "Goal reached!"}</span>
-            </div>
           </div>
-        </div>
 
-        {/* Daily Progress */}
-        <div className="space-y-3">
-          <div className="text-sm font-semibold text-zinc-300">Today&apos;s Progress</div>
-
-          <div className="space-y-3">
-            {/* Water */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center shrink-0">
-                <Droplets className="w-4 h-4 text-blue-500" />
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-zinc-300">Water</span>
-                  <span className="text-zinc-500">
-                    {waterIntake}/{waterGoal} glasses
-                  </span>
-                </div>
-                <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500 rounded-full transition-all"
-                    style={{ width: `${waterProgress * 100}%` }}
-                  />
-                </div>
-              </div>
+          <div className="rounded-2xl border border-border bg-secondary p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-black text-foreground">Calories</span>
+              <span className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+                {caloriePercent}%
+              </span>
             </div>
-
-            {/* Calories */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
-                <Utensils className="w-4 h-4 text-green-500" />
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-zinc-300">Calories</span>
-                  <span className="text-zinc-500">
-                    {calorieIntake.toLocaleString()}/{calorieGoal.toLocaleString()} kcal
-                  </span>
-                </div>
-                <div className="h-2 bg-zinc-900 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-green-500 rounded-full transition-all"
-                    style={{ width: `${calorieProgress * 100}%` }}
-                  />
-                </div>
-              </div>
+            <p className="text-2xl font-black leading-none text-foreground">
+              {calorieIntake.toLocaleString()}
+              <span className="ml-1 text-sm text-muted-foreground">
+                / {calorieGoal.toLocaleString()} kcal
+              </span>
+            </p>
+            <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${caloriePercent}%` }}
+              />
             </div>
           </div>
         </div>

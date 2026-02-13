@@ -38,10 +38,10 @@ export function Providers({ children }: { children: ReactNode }) {
       publishableKey={clerkKey}
       appearance={{
         variables: {
-          colorPrimary: "hsl(25, 35%, 22%)",
-          colorBackground: "hsl(38, 48%, 96%)",
-          colorInputBackground: "hsl(38, 48%, 96%)",
-          colorInputText: "hsl(28, 22%, 18%)",
+          colorPrimary: "hsl(var(--primary))",
+          colorBackground: "hsl(var(--background))",
+          colorInputBackground: "hsl(var(--secondary))",
+          colorInputText: "hsl(var(--foreground))",
         },
       }}
     >
