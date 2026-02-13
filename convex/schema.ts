@@ -10,6 +10,43 @@ export default defineSchema({
     weightUnit: v.optional(v.union(v.literal("lbs"), v.literal("kg"))),
     distanceUnit: v.optional(v.union(v.literal("km"), v.literal("miles"))),
     createdAt: v.number(),
+
+    // Onboarding and profile
+    onboardingCompletedAt: v.optional(v.number()),
+    age: v.optional(v.number()),
+    gender: v.optional(v.union(v.literal("male"), v.literal("female"), v.literal("other"))),
+    heightCm: v.optional(v.number()),
+    weightKg: v.optional(v.number()),
+    activityLevel: v.optional(v.union(
+      v.literal("sedentary"),
+      v.literal("light"),
+      v.literal("moderate"),
+      v.literal("active"),
+      v.literal("very_active")
+    )),
+
+    // Workout preferences
+    weeklyWorkoutGoal: v.optional(v.number()),
+    preferredWorkoutDays: v.optional(v.array(v.number())),
+    fitnessGoal: v.optional(v.union(
+      v.literal("lose_weight"),
+      v.literal("maintain"),
+      v.literal("gain_muscle"),
+      v.literal("strength"),
+      v.literal("general")
+    )),
+    experienceLevel: v.optional(v.union(
+      v.literal("beginner"),
+      v.literal("intermediate"),
+      v.literal("advanced")
+    )),
+
+    // Daily targets (auto-calculated but editable)
+    dailyCalorieTarget: v.optional(v.number()),
+    dailyProteinTarget: v.optional(v.number()),
+    dailyCarbsTarget: v.optional(v.number()),
+    dailyFatTarget: v.optional(v.number()),
+    dailyWaterTarget: v.optional(v.number()),
   }).index("by_clerk_id", ["clerkId"]),
 
   // Food entries with detailed nutrition

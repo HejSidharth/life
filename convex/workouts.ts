@@ -806,3 +806,119 @@ export const getPersonalRecords = query({
       .collect();
   },
 });
+
+// Get workout streak (consecutive workout days, ignoring rest days)
+export const getWorkoutStreak = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const workouts = await ctx.db
+      .query("workouts")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("status"), "completed"))
+      .order("desc")
+      .take(100);
+
+    if (workouts.length === 0) {
+      return { streak: 0, longestStreak: 0 };
+    }
+
+    // Get unique workout dates (normalized to midnight)
+    const workoutDates = new Set<number>();
+    for (const workout of workouts) {
+      if (workout.completedAt) {
+        const date = new Date(workout.completedAt);
+        date.setHours(0, 0, 0, 0);
+        workoutDates.add(date.getTime());
+      }
+    }
+
+    const sortedDates = Array.from(workoutDates).sort((a, b) => b - a);
+
+    if (sortedDates.length === 0) {
+      return { streak: 0, longestStreak: 0 };
+    }
+
+    // Calculate current streak
+    let streak = 1;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const mostRecentWorkout = sortedDates[0];
+    const mostRecentDate = new Date(mostRecentWorkout);
+
+    // Check if streak is still active (worked out today or yesterday)
+    if (mostRecentDate.getTime() !== today.getTime() && mostRecentDate.getTime() !== yesterday.getTime()) {
+      // Streak broken - most recent workout was more than 1 day ago
+      return { streak: 0, longestStreak: calculateLongestStreak(sortedDates) };
+    }
+
+    // Count consecutive days (ignoring gaps of 1 day as rest days)
+    for (let i = 0; i < sortedDates.length - 1; i++) {
+      const currentDate = new Date(sortedDates[i]);
+      const nextDate = new Date(sortedDates[i + 1]);
+
+      const diffDays = (currentDate.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24);
+
+      if (diffDays <= 2) {
+        // Within 2 days counts as consecutive (allows 1 rest day)
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      streak,
+      longestStreak: calculateLongestStreak(sortedDates),
+    };
+  },
+});
+
+// Helper function to calculate longest streak ever
+function calculateLongestStreak(sortedDates: number[]): number {
+  if (sortedDates.length === 0) return 0;
+
+  let longestStreak = 1;
+  let currentStreak = 1;
+
+  for (let i = 0; i < sortedDates.length - 1; i++) {
+    const currentDate = new Date(sortedDates[i]);
+    const nextDate = new Date(sortedDates[i + 1]);
+
+    const diffDays = (currentDate.getTime() - nextDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (diffDays <= 2) {
+      currentStreak++;
+      longestStreak = Math.max(longestStreak, currentStreak);
+    } else {
+      currentStreak = 1;
+    }
+  }
+
+  return longestStreak;
+}
+
+// Get workouts for this week (for heatmap)
+export const getThisWeekWorkouts = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+
+    const workouts = await ctx.db
+      .query("workouts")
+      .withIndex("by_user_status", (q) =>
+        q.eq("userId", args.userId).eq("status", "completed")
+      )
+      .filter((q) => q.gte(q.field("completedAt"), oneWeekAgo))
+      .order("desc")
+      .collect();
+
+    return workouts.map((w) => ({
+      _id: w._id.toString(),
+      completedAt: w.completedAt || w.startedAt,
+    }));
+  },
+});
