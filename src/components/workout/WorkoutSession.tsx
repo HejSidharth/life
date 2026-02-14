@@ -20,6 +20,7 @@ import {
   Workout,
   ExerciseLibraryItem,
   WorkoutSet,
+  SetType,
   formatDuration,
   calculateVolume,
 } from "@/types/workout";
@@ -65,7 +66,7 @@ interface WorkoutSessionProps {
   onAddSet: (
     workoutExerciseId: string,
     exerciseLibraryId: string,
-    initialData?: { weight?: number; reps?: number; rpe?: number; setType?: string }
+    initialData?: { weight?: number; reps?: number; rpe?: number; setType?: SetType }
   ) => Promise<void>;
   onUpdateSet: (setId: string, data: Partial<WorkoutSet>) => Promise<void>;
   onCompleteSet: (
