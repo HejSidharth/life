@@ -12,6 +12,7 @@ import { MoreHorizontal, History, ExternalLink, Trash2 } from "lucide-react";
 interface ExerciseCardProps {
   exercise: WorkoutExercise;
   exerciseNumber: number;
+  totalExercises: number;
   onAddSet: (initialData?: {
     weight?: number;
     reps?: number;
@@ -63,6 +64,7 @@ const cloudStyles = `
 export function ExerciseCard({
   exercise,
   exerciseNumber,
+  totalExercises,
   onAddSet,
   onUpdateSet,
   onCompleteSet,
