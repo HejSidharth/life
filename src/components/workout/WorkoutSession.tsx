@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,10 +20,36 @@ import {
   Workout,
   ExerciseLibraryItem,
   WorkoutSet,
-  SetType,
   formatDuration,
   calculateVolume,
 } from "@/types/workout";
+
+// Floating cloud animation styles
+const cloudStyles = `
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-8px) translateX(4px); }
+  }
+  @keyframes float-delayed {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-6px) translateX(-3px); }
+  }
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-10px) translateX(2px); }
+  }
+  .cloud-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .cloud-float-delayed {
+    animation: float-delayed 8s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+  .cloud-float-slow {
+    animation: float-slow 10s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+`;
 
 interface PreviousPerformances {
   [exerciseLibraryId: string]: {
@@ -38,7 +65,7 @@ interface WorkoutSessionProps {
   onAddSet: (
     workoutExerciseId: string,
     exerciseLibraryId: string,
-    initialData?: { weight?: number; reps?: number; rpe?: number; setType?: SetType }
+    initialData?: { weight?: number; reps?: number; rpe?: number; setType?: string }
   ) => Promise<void>;
   onUpdateSet: (setId: string, data: Partial<WorkoutSet>) => Promise<void>;
   onCompleteSet: (
@@ -83,8 +110,8 @@ export function WorkoutSession({
   const [showFinishDialog, setShowFinishDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [now, setNow] = useState(workout.startedAt);
-  const [collapsedExercises, setCollapsedExercises] = useState<Set<string>>(new Set());
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState(0);
   const { setWizardOpen } = useWizard();
 
   const { restSeconds, timerKey, startRest, stopRest, isResting } = useRestTimer();
@@ -132,18 +159,6 @@ export function WorkoutSession({
     setIsEditingName(false);
   };
 
-  const toggleExerciseExpand = (exerciseId: string) => {
-    setCollapsedExercises((prev) => {
-      const next = new Set(prev);
-      if (next.has(exerciseId)) {
-        next.delete(exerciseId);
-      } else {
-        next.add(exerciseId);
-      }
-      return next;
-    });
-  };
-
   const handleFinishWorkout = async () => {
     await onCompleteWorkout();
     setShowFinishDialog(false);
@@ -154,26 +169,45 @@ export function WorkoutSession({
     ? Math.min(currentExerciseIndex, workout.exercises.length - 1)
     : 0;
   const currentExercise = workout.exercises[activeExerciseIndex];
-  const isLastExercise = hasExercises && activeExerciseIndex === workout.exercises.length - 1;
 
-  const goToNextExercise = () => {
-    if (!hasExercises) return;
-    if (isLastExercise) {
-      setShowFinishDialog(true);
-      return;
+  // Swipe handlers
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const threshold = 50; // Low resistance - easy to swipe
+    if (info.offset.x < -threshold && activeExerciseIndex < workout.exercises.length - 1) {
+      // Swipe left - next exercise
+      setSwipeDirection(1);
+      setCurrentExerciseIndex((prev) => Math.min(prev + 1, workout.exercises.length - 1));
+    } else if (info.offset.x > threshold && activeExerciseIndex > 0) {
+      // Swipe right - previous exercise
+      setSwipeDirection(-1);
+      setCurrentExerciseIndex((prev) => Math.max(prev - 1, 0));
     }
-    setCurrentExerciseIndex((prev) => Math.min(prev + 1, workout.exercises.length - 1));
   };
 
-  const goToPreviousExercise = () => {
-    setCurrentExerciseIndex((prev) => Math.max(prev - 1, 0));
+  const goToExercise = (index: number) => {
+    setSwipeDirection(index > activeExerciseIndex ? 1 : -1);
+    setCurrentExerciseIndex(index);
+  };
+
+  // Calculate exercise completion for auto-collapse
+  const isExerciseCompleted = (exercise: typeof currentExercise) => {
+    if (!exercise) return false;
+    const total = exercise.sets.length;
+    const completed = exercise.sets.filter((s) => s.isCompleted).length;
+    return total > 0 && completed === total;
   };
 
   return (
     <div className="flex min-h-[calc(100dvh-3.5rem)] flex-col gap-4 pb-2">
+      <style>{cloudStyles}</style>
+
       {/* Workout Header */}
-      <Card className="rounded-[2rem] border border-border bg-card">
-        <CardHeader className="p-5 pb-3">
+      <Card className="rounded-[2rem] border border-border bg-card relative overflow-hidden">
+        {/* Floating clouds for header */}
+        <div className="absolute -left-4 top-2 w-16 h-8 bg-gradient-to-br from-white/30 to-white/10 rounded-full blur-sm cloud-float" />
+        <div className="absolute right-8 top-4 w-12 h-6 bg-gradient-to-br from-white/20 to-white/5 rounded-full blur-sm cloud-float-delayed" />
+        
+        <CardHeader className="p-5 pb-3 relative z-10">
           <div className="flex items-start justify-between gap-4">
             {isEditingName ? (
               <div className="flex items-center gap-2 flex-1">
@@ -210,7 +244,7 @@ export function WorkoutSession({
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="px-5 pb-5 pt-0">
+        <CardContent className="px-5 pb-5 pt-0 relative z-10">
           <div className="flex flex-wrap items-center gap-4 text-xs font-black uppercase tracking-[0.18em] text-muted-foreground">
             <div className="flex items-center gap-1">
               <span>{formatDuration(elapsedSeconds)}</span>
@@ -232,87 +266,133 @@ export function WorkoutSession({
                 {prCount} PR{prCount !== 1 ? "s" : ""}
               </div>
             )}
-            <div>
-              <span className="text-foreground">{hasExercises ? activeExerciseIndex + 1 : 0}</span>
-              /{workout.exercises.length} exercise
-              {workout.exercises.length !== 1 ? "s" : ""}
-            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Current Exercise */}
-      <div className="flex-1 space-y-4">
-        {hasExercises && currentExercise ? (
-          <ExerciseCard
-            key={currentExercise._id}
-            exercise={currentExercise}
-            isExpanded={!collapsedExercises.has(currentExercise._id)}
-            onToggleExpand={() => toggleExerciseExpand(currentExercise._id)}
-            onAddSet={(initialData) =>
-              onAddSet(currentExercise._id, currentExercise.exerciseLibraryId, initialData)
-            }
-            onUpdateSet={(setId, data) => onUpdateSet(setId, data)}
-            onCompleteSet={onCompleteSet}
-            onDeleteSet={onDeleteSet}
-            onRemoveExercise={async () => {
-              const nextCount = workout.exercises.length - 1;
-              await onRemoveExercise(currentExercise._id);
-              if (nextCount <= 0) {
-                setCurrentExerciseIndex(0);
-                return;
-              }
-              setCurrentExerciseIndex((prev) => Math.min(prev, nextCount - 1));
-            }}
-            onStartRest={startRest}
-            previousPerformance={previousPerformances?.[currentExercise.exerciseLibraryId]}
-            onViewHistory={
-              onViewExerciseHistory
-                ? () =>
-                    onViewExerciseHistory(
-                      currentExercise.exerciseLibraryId,
-                      currentExercise.exerciseName
-                    )
-                : undefined
-            }
-            onViewTechnique={onViewExerciseTechnique}
-            supersetLabel={
-              currentExercise.supersetGroup
-                ? `Superset ${currentExercise.supersetGroup}`
-                : undefined
-            }
-          />
-        ) : (
-          <Card className="rounded-[2rem] border border-dashed border-border bg-card">
-            <CardContent className="p-8 text-center">
-              <p className="text-lg font-black text-foreground">No exercises yet</p>
-              <p className="mt-1 text-sm font-semibold text-muted-foreground">
-                Add an exercise to begin this workout.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      {/* Exercise Pager with Dots */}
+      {hasExercises ? (
+        <>
+          {/* Dot Indicators */}
+          <div className="flex items-center justify-center gap-2 px-4">
+            {workout.exercises.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToExercise(index)}
+                className={`w-2.5 h-2.5 rounded-full transition-all ${
+                  index === activeExerciseIndex
+                    ? "bg-primary w-6"
+                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                }`}
+                aria-label={`Go to exercise ${index + 1}`}
+              />
+            ))}
+          </div>
 
-      {/* Pager Actions */}
-      <div className="mt-auto pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+          {/* Swipeable Exercise Area */}
+          <div className="flex-1 overflow-hidden relative">
+            <AnimatePresence initial={false} custom={swipeDirection} mode="wait">
+              <motion.div
+                key={activeExerciseIndex}
+                custom={swipeDirection}
+                initial={{ x: swipeDirection > 0 ? 300 : -300, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: swipeDirection > 0 ? -300 : 300, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={handleDragEnd}
+                className="h-full"
+              >
+                {currentExercise && (
+                  <ExerciseCard
+                    key={currentExercise._id}
+                    exercise={currentExercise}
+                    exerciseNumber={activeExerciseIndex + 1}
+                    totalExercises={workout.exercises.length}
+                    isCollapsed={isExerciseCompleted(currentExercise)}
+                    onAddSet={(initialData) =>
+                      onAddSet(currentExercise._id, currentExercise.exerciseLibraryId, initialData)
+                    }
+                    onUpdateSet={(setId, data) => onUpdateSet(setId, data)}
+                    onCompleteSet={onCompleteSet}
+                    onDeleteSet={onDeleteSet}
+                    onRemoveExercise={async () => {
+                      const nextCount = workout.exercises.length - 1;
+                      await onRemoveExercise(currentExercise._id);
+                      if (nextCount <= 0) {
+                        setCurrentExerciseIndex(0);
+                        return;
+                      }
+                      setCurrentExerciseIndex((prev) => Math.min(prev, nextCount - 1));
+                    }}
+                    onStartRest={startRest}
+                    previousPerformance={previousPerformances?.[currentExercise.exerciseLibraryId]}
+                    onViewHistory={
+                      onViewExerciseHistory
+                        ? () =>
+                            onViewExerciseHistory(
+                              currentExercise.exerciseLibraryId,
+                              currentExercise.exerciseName
+                            )
+                        : undefined
+                    }
+                    onViewTechnique={onViewExerciseTechnique}
+                    supersetLabel={
+                      currentExercise.supersetGroup
+                        ? `Superset ${currentExercise.supersetGroup}`
+                        : undefined
+                    }
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Swipe Hints */}
+            {workout.exercises.length > 1 && (
+              <>
+                {activeExerciseIndex > 0 && (
+                  <div className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 flex items-center justify-center shadow-sm">
+                    <span className="text-xs">←</span>
+                  </div>
+                )}
+                {activeExerciseIndex < workout.exercises.length - 1 && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background/80 flex items-center justify-center shadow-sm">
+                    <span className="text-xs">→</span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        <Card className="rounded-[2rem] border border-dashed border-border bg-card flex-1">
+          <CardContent className="p-8 text-center flex flex-col items-center justify-center h-full">
+            <p className="text-lg font-black text-foreground">No exercises yet</p>
+            <p className="mt-1 text-sm font-semibold text-muted-foreground">
+              Add an exercise to begin this workout.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Bottom Actions */}
+      <div className="mt-auto pb-[calc(env(safe-area-inset-bottom)+0.75rem)] px-4">
         <div className="space-y-3 rounded-[2rem] border border-border bg-card p-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setIsExercisePickerOpen(true)}
-          className="h-14 w-full rounded-full border-border bg-secondary text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground"
-        >
-          Add Exercise
-        </Button>
-        <Button
-          type="button"
-          onClick={goToNextExercise}
-          disabled={!hasExercises}
-          className="h-16 w-full rounded-full text-[11px] font-black uppercase tracking-[0.22em]"
-        >
-          {isLastExercise ? "Finish Workout" : "Next Exercise"}
-        </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsExercisePickerOpen(true)}
+            className="h-14 w-full rounded-full border-border bg-secondary text-[10px] font-black uppercase tracking-[0.22em] text-muted-foreground hover:text-foreground"
+          >
+            + Add Exercise
+          </Button>
+          {hasExercises && (
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <span>Swipe to navigate</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -383,18 +463,6 @@ export function WorkoutSession({
             >
               Keep Training
             </Button>
-            {hasExercises && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  goToPreviousExercise();
-                  setShowCancelDialog(false);
-                }}
-                className="h-12 rounded-full border-border bg-card text-sm font-black uppercase tracking-[0.15em]"
-              >
-                Previous Exercise
-              </Button>
-            )}
           </div>
         </DialogContent>
       </Dialog>

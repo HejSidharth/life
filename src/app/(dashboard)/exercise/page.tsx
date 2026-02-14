@@ -8,62 +8,21 @@ import { useUser } from "@clerk/nextjs";
 import { useActiveDate } from "@/hooks/use-active-date";
 import { getDayPhase } from "@/lib/dayPhase";
 import { Button } from "@/components/ui/button";
-import { Zap } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { Zap, Dumbbell } from "lucide-react";
 import { WorkoutSession } from "@/components/workout/WorkoutSession";
 import { ExerciseHistoryDialog } from "@/components/workout/ExerciseHistoryDialog";
-import { WorkoutDetailDialog } from "@/components/workout/WorkoutDetailDialog";
-import { RoutineWizard, RoutineData } from "@/components/workout/RoutineWizard";
+import { RoutineWizard } from "@/components/workout/RoutineWizard";
 import { PlanSetupFlow, PlanSetupData } from "@/components/workout/PlanSetupFlow";
 import { NewWorkoutFlow } from "@/components/workout/NewWorkoutFlow";
 import { WorkoutStarterDialog } from "@/components/workout/WorkoutStarterDialog";
+import { 
+  TodayDayCard, 
+  ActivePlanSection 
+} from "@/components/workout";
 import { ExerciseLibraryItem, Workout } from "@/types/workout";
 import { MascotSceneHero } from "@/components/dashboard/MascotSceneHero";
 import { format } from "date-fns";
 import type { Id } from "convex/_generated/dataModel";
-
-const springTransition = {
-  type: "spring" as const,
-  stiffness: 400,
-  damping: 30,
-};
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: springTransition,
-  },
-};
-
-interface AdherenceStats {
-  plannedCount: number;
-  completedCount: number;
-  adherenceRate: number;
-}
-
-interface GymProfileSummary {
-  _id: string;
-  isDefault: boolean;
-}
 
 interface PlanPrescriptionSummary {
   _id: string;
@@ -80,6 +39,21 @@ interface PlanSummary {
   focus?: string;
   estimatedMinutes?: number;
   prescriptions: PlanPrescriptionSummary[];
+}
+
+interface PlanForEditing {
+  planInstanceId: string;
+  planTemplateId: string;
+  planName: string;
+  goal: string;
+  daysPerWeek: number;
+  sessionMinutes: number;
+  currentWeek: number;
+  totalWeeks: number;
+  completedDays: number;
+  totalDays: number;
+  nextWorkoutDay?: string;
+  startDate: number;
 }
 
 interface WorkoutCompletionResult {
@@ -103,9 +77,6 @@ function ExerciseContent() {
   const { selectedDate, isToday, getLogTimestamp } = useActiveDate();
   const dayPhase = getDayPhase();
 
-  // Feature D: Full history toggle (must be before query that uses it)
-  const [showFullHistory, setShowFullHistory] = useState(false);
-
   // Convex Queries
   const activeWorkoutRaw = useQuery(
     api.workouts.getActiveWorkout,
@@ -116,29 +87,19 @@ function ExerciseContent() {
     api.templates.getTemplates,
     userId ? { userId } : "skip"
   );
-  
-  const recentWorkoutsRaw = useQuery(
-    api.workouts.getRecentWorkouts,
-    userId ? { userId, limit: showFullHistory ? 50 : 10 } : "skip"
-  );
 
   const todayPlanSummary = useQuery(
     api.plans.getTodayPlanSummary,
     userId ? { userId, date: selectedDate.getTime() } : "skip"
   );
 
-  const adherence = useQuery(
-    api.plans.getAdherence,
+  const planForEditing = useQuery(
+    api.plans.getPlanForEditing,
     userId ? { userId } : "skip"
   );
+
   const streakData = useQuery(
     api.workouts.getWorkoutStreak,
-    userId ? { userId } : "skip"
-  );
-
-
-  const gymProfilesRaw = useQuery(
-    api.gymProfiles.getForUser,
     userId ? { userId } : "skip"
   );
 
@@ -177,14 +138,6 @@ function ExerciseContent() {
   );
 
   // Feature C: Workout detail dialog
-  const [detailWorkoutId, setDetailWorkoutId] = useState<string | null>(null);
-  const workoutDetailRaw = useQuery(
-    api.workouts.getWorkoutDetails,
-    detailWorkoutId
-      ? { workoutId: detailWorkoutId as Id<"workouts"> }
-      : "skip"
-  );
-
   // Convex Mutations
   const startWorkout = useMutation(api.workouts.startWorkout);
   const startFromTemplate = useMutation(api.templates.startWorkoutFromTemplate);
@@ -206,11 +159,11 @@ function ExerciseContent() {
     api.exerciseLibrary.seedExerciseLibrary
   );
 
+  // Dialog states
   const [showStartDialog, setShowStartDialog] = useState(false);
   const [showStarterDialog, setShowStarterDialog] = useState(false);
   const [showPlanSetupDialog, setShowPlanSetupDialog] = useState(false);
   const [showRoutineWizard, setShowRoutineWizard] = useState(false);
-  const [isBootstrapping, setIsBootstrapping] = useState(false);
   const [hasAutoSeededLibrary, setHasAutoSeededLibrary] = useState(false);
 
   const activeWorkout = activeWorkoutRaw as Workout | null;
@@ -223,7 +176,6 @@ function ExerciseContent() {
   // Listen for dock action
   useEffect(() => {
     const handleTrigger = () => {
-      // Check if templates exist - if yes, show template picker, otherwise go straight to naming
       const hasTemplates = templates.length > 0;
       if (hasTemplates) {
         setShowStarterDialog(true);
@@ -234,18 +186,8 @@ function ExerciseContent() {
     window.addEventListener("trigger-start-workout", handleTrigger);
     return () => window.removeEventListener("trigger-start-workout", handleTrigger);
   }, [templates.length]);
-  const recentWorkouts = (recentWorkoutsRaw || []) as {
-    _id: string;
-    name: string;
-    completedAt: number;
-    duration: number;
-    totalVolume: number;
-    exerciseCount: number;
-  }[];
+
   const planSummary = todayPlanSummary as PlanSummary | null;
-  const profileList = (gymProfilesRaw || []) as GymProfileSummary[];
-  const defaultProfile = profileList.find((profile) => profile.isDefault);
-  const adherenceStats = adherence as AdherenceStats | undefined;
   const boltSlots = 4;
   const activeBolts = Math.min(
     boltSlots,
@@ -308,11 +250,8 @@ function ExerciseContent() {
     }
   };
 
-
-
   const handleCreatePlan = async (data: PlanSetupData) => {
     if (!userId) return;
-    setIsBootstrapping(true);
     try {
       await createDefaultPlan({
         userId,
@@ -323,8 +262,14 @@ function ExerciseContent() {
       setShowPlanSetupDialog(false);
     } catch (error) {
       console.error("Failed to create plan:", error);
-    } finally {
-      setIsBootstrapping(false);
+    }
+  };
+
+  const handleStartWorkout = () => {
+    if (templates.length > 0) {
+      setShowStarterDialog(true);
+    } else {
+      setShowStartDialog(true);
     }
   };
 
@@ -420,8 +365,12 @@ function ExerciseContent() {
     );
   }
 
+  const planData = planForEditing as PlanForEditing | null | undefined;
+  const hasActivePlan = !!planData;
+
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-5 pb-10">
+      {/* Hero Header */}
       <MascotSceneHero
         sceneKey="exercise"
         title={isToday ? "Workouts" : format(selectedDate, "EEEE")}
@@ -453,139 +402,47 @@ function ExerciseContent() {
         )}
       />
 
-      {planSummary?.hasSession && (
-        <section className="rounded-[1.75rem] border border-border bg-card p-4">
-          <div className="space-y-3">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="text-xl font-black text-foreground">Today&apos;s Session: {planSummary.dayName}</h3>
-                <p className="text-xs font-semibold text-muted-foreground">
-                  {planSummary.focus} · {planSummary.estimatedMinutes} min · {planSummary.prescriptions.length} prescriptions
-                </p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              {planSummary.prescriptions.slice(0, 4).map((prescription) => (
-                <div key={prescription._id} className="flex items-center justify-between rounded-xl border border-border bg-background px-3 py-2 text-xs">
-                  <span className="font-bold text-foreground">{prescription.exerciseName}</span>
-                  <span className="font-semibold text-muted-foreground">
-                    {prescription.targetSets} x {prescription.targetReps}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-
-
-      {/* Templates Section */}
-      <section className="space-y-4 rounded-[1.75rem] border border-border bg-card p-4">
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-lg font-black text-foreground">Templates</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full border-border bg-background font-black uppercase tracking-wider"
-            onClick={() => setShowRoutineWizard(true)}
-          >
-            New
-          </Button>
-        </div>
-
-        {templates.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-border bg-background p-8 text-center">
-            <p className="text-sm font-semibold text-muted-foreground">Save your workouts as templates to quickly reuse them.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {templates.map((template) => (
-              <div key={template._id}>
-                <Card
-                  className="cursor-pointer overflow-hidden rounded-2xl border border-border bg-background transition-opacity hover:opacity-90"
-                  onClick={() => handleStartTemplate(template._id)}
-                >
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <h3 className="font-black text-foreground">{template.name}</h3>
-                      <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
-                        {template.exercises.length} exercises
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Recent History */}
-      <section className="space-y-4 rounded-[1.75rem] border border-border bg-card p-4">
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-lg font-black text-foreground">Recent History</h2>
-          <button
-            className="rounded-full border border-border bg-background px-3 py-1 text-xs font-black uppercase tracking-wider text-muted-foreground transition-opacity hover:opacity-90"
-            onClick={() => setShowFullHistory(!showFullHistory)}
-          >
-            {showFullHistory ? "Show Less" : "Full History"}
-          </button>
-        </div>
-
-        <div className="space-y-2">
-          {recentWorkouts.length === 0 ? (
-            <p className="rounded-2xl border border-border bg-background py-8 text-center text-sm font-semibold text-muted-foreground">
-              No completed workouts yet.
-            </p>
-          ) : (
-            recentWorkouts.map((workout) => (
-              <div key={workout._id}>
-                <Card
-                  className="cursor-pointer rounded-2xl border border-border bg-background transition-opacity hover:opacity-90"
-                  onClick={() => setDetailWorkoutId(workout._id)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div>
-                          <h3 className="font-black text-foreground">{workout.name}</h3>
-                          <p className="text-xs font-semibold text-muted-foreground">
-                            {format(new Date(workout.completedAt), "eee, MMM d")} · {workout.duration}m
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <span className="text-xs font-black text-foreground">
-                            {workout.totalVolume.toLocaleString()} lbs
-                          </span>
-                        </div>
-                        <p className="mt-1 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-                          {workout.exerciseCount} Exercises
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      {/* Workout Detail Dialog (Feature C) */}
-      <WorkoutDetailDialog
-        open={detailWorkoutId !== null}
-        onOpenChange={(open) => {
-          if (!open) setDetailWorkoutId(null);
-        }}
-        workout={workoutDetailRaw as Parameters<typeof WorkoutDetailDialog>[0]["workout"]}
-        isLoading={detailWorkoutId !== null && workoutDetailRaw === undefined}
+      {/* Today's Workout Card */}
+      <TodayDayCard
+        dayName={planSummary?.dayName}
+        focus={planSummary?.focus}
+        estimatedMinutes={planSummary?.estimatedMinutes}
+        prescriptions={planSummary?.prescriptions || []}
+        isRestDay={Boolean(!planSummary?.hasSession || (planSummary?.focus && planSummary.focus.toLowerCase().includes("rest")))}
+        onStartWorkout={handleStartWorkout}
       />
+
+      {/* Active Plan Section */}
+      {hasActivePlan ? (
+        <ActivePlanSection
+          planName={planData.planName}
+          currentWeek={planData.currentWeek}
+          totalWeeks={planData.totalWeeks}
+          completedDays={planData.completedDays}
+          totalDays={planData.totalDays}
+          nextWorkoutDay={planData.nextWorkoutDay}
+        />
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <div className="rounded-[1.75rem] border border-dashed border-border bg-card p-6 text-center">
+            <Dumbbell className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+            <h3 className="text-lg font-black text-foreground mb-1">No Active Plan</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Create a training plan to get structured workouts
+            </p>
+            <Button
+              onClick={() => setShowPlanSetupDialog(true)}
+              className="rounded-full font-black uppercase tracking-wider"
+            >
+              Create Plan
+            </Button>
+          </div>
+        </motion.div>
+      )}
 
       <RoutineWizard
         open={showRoutineWizard}
@@ -605,13 +462,11 @@ function ExerciseContent() {
             })),
           });
           
-          // Automatically assign the new custom plan
           await assignTemplate({
             userId,
             planTemplateId,
           });
 
-          // Also create a workout template so it appears in the Templates section
           let order = 0;
           const templateExercises = data.days.flatMap(day => 
             day.exercises.map(ex => ({

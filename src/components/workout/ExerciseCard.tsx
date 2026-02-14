@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SetRow } from "./SetRow";
 import { WorkoutExercise, WorkoutSet, calculateVolume, SetType } from "@/types/workout";
+import { MoreHorizontal, History, ExternalLink, Trash2 } from "lucide-react";
 
 interface ExerciseCardProps {
   exercise: WorkoutExercise;
+  exerciseNumber: number;
   onAddSet: (initialData?: {
     weight?: number;
     reps?: number;
@@ -25,14 +28,41 @@ interface ExerciseCardProps {
   previousPerformance?: {
     sets: { weight?: number; reps?: number }[];
   };
-  isExpanded?: boolean;
-  onToggleExpand?: () => void;
+  isCollapsed?: boolean;
   supersetLabel?: string;
   defaultRestSeconds?: number;
 }
 
+// Floating cloud animation styles
+const cloudStyles = `
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-8px) translateX(4px); }
+  }
+  @keyframes float-delayed {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-6px) translateX(-3px); }
+  }
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-10px) translateX(2px); }
+  }
+  .cloud-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .cloud-float-delayed {
+    animation: float-delayed 8s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+  .cloud-float-slow {
+    animation: float-slow 10s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+`;
+
 export function ExerciseCard({
   exercise,
+  exerciseNumber,
   onAddSet,
   onUpdateSet,
   onCompleteSet,
@@ -42,17 +72,28 @@ export function ExerciseCard({
   onViewHistory,
   onViewTechnique,
   previousPerformance,
-  isExpanded = true,
-  onToggleExpand,
+  isCollapsed: initialCollapsed = false,
   supersetLabel,
   defaultRestSeconds = 90,
 }: ExerciseCardProps) {
   const [isRemoving, setIsRemoving] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(!initialCollapsed);
 
   const completedSets = exercise.sets.filter((s) => s.isCompleted);
   const totalVolume = calculateVolume(exercise.sets);
   const prSets = exercise.sets.filter((s) => s.isPR);
+  const isFullyCompleted = exercise.sets.length > 0 && completedSets.length === exercise.sets.length;
+
+  // Auto-collapse when fully completed
+  useEffect(() => {
+    if (isFullyCompleted && isExpanded) {
+      const timer = setTimeout(() => {
+        setIsExpanded(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isFullyCompleted, isExpanded]);
 
   const handleCompleteSet = async (setId: string, data: { weight?: number; reps?: number; rpe?: number; rir?: number }) => {
     const result = await onCompleteSet(setId, data);
@@ -70,173 +111,206 @@ export function ExerciseCard({
   return (
     <Card
       className={cn(
-        "relative overflow-visible rounded-[2rem] border border-border bg-card",
-        showMenu && "z-50"
+        "relative overflow-hidden rounded-[1.5rem] border border-border bg-card",
+        showMenu && "z-50",
+        isFullyCompleted && "opacity-80"
       )}
     >
-      {/* Superset indicator */}
-      {supersetLabel && (
-        <div className="absolute top-0 left-0 bg-primary text-primary-foreground text-xs font-medium px-2 py-0.5 rounded-br rounded-tl-[inherit] z-10">
-          {supersetLabel}
-        </div>
-      )}
+      <style>{cloudStyles}</style>
 
-      <CardHeader className="p-5 pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <button
-              type="button"
-              onClick={onToggleExpand}
-              className="text-left w-full group"
-            >
-              <h3 className="truncate text-5xl font-black tracking-tight text-foreground transition-opacity group-hover:opacity-80">
+      {/* Floating Clouds */}
+      <div className="absolute -left-6 top-6 w-20 h-10 bg-gradient-to-br from-white/40 to-white/20 rounded-full blur-sm cloud-float" />
+      <div className="absolute right-4 top-8 w-16 h-8 bg-gradient-to-br from-white/30 to-white/15 rounded-full blur-sm cloud-float-delayed" />
+      <div className="absolute right-12 top-20 w-12 h-6 bg-gradient-to-br from-white/25 to-white/10 rounded-full blur-sm cloud-float-slow" />
+
+      {/* Gradient Header */}
+      <div className="relative bg-gradient-to-br from-[#4a7fc9] to-[#2f63bf] p-5 overflow-hidden">
+        {/* Subtle pattern overlay */}
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_30%,white_1px,transparent_1px)] bg-[length:20px_20px]" />
+
+        {/* Superset indicator */}
+        {supersetLabel && (
+          <div className="absolute top-3 left-3 bg-white/20 text-white text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full">
+            {supersetLabel}
+          </div>
+        )}
+
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {/* Exercise Number Badge */}
+            <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center font-black text-xl text-white">
+              {exerciseNumber}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl font-black text-white truncate">
                 {exercise.exerciseName}
               </h3>
-              {!isExpanded && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {completedSets.length}/{exercise.sets.length} sets
-                  {totalVolume > 0 && ` · ${totalVolume.toLocaleString()} vol`}
-                  {prSets.length > 0 && (
-                    <span className="text-foreground ml-1 font-bold">
-                      {prSets.length} PR{prSets.length > 1 ? "s" : ""}
-                    </span>
-                  )}
-                </p>
-              )}
-            </button>
+              <p className="text-sm text-white/80 mt-0.5">
+                {completedSets.length}/{exercise.sets.length} sets
+                {totalVolume > 0 && ` · ${totalVolume.toLocaleString()} lbs`}
+              </p>
+            </div>
           </div>
 
-          {/* Overflow menu */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowMenu(!showMenu)}
-              className="h-9 w-9 flex items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-secondary hover:text-foreground"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                <circle cx="8" cy="3" r="1.25" />
-                <circle cx="8" cy="8" r="1.25" />
-                <circle cx="8" cy="13" r="1.25" />
-              </svg>
-            </button>
+          <div className="flex items-center gap-2">
+            {/* Status Badge */}
+            <div className={`px-3 py-1.5 rounded-full text-xs font-black tracking-wider ${
+              isFullyCompleted
+                ? "bg-green-400 text-green-950"
+                : "bg-white/20 text-white"
+            }`}>
+              {isFullyCompleted ? "DONE" : "ACTIVE"}
+            </div>
 
-            {showMenu && (
-              <>
-                {/* Backdrop to close menu */}
-                <button
-                  type="button"
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowMenu(false)}
-                  aria-label="Close menu"
-                />
-                <div className="absolute right-0 top-full mt-1 z-50 min-w-[140px] rounded-xl border border-border bg-card py-1">
-                  {onViewHistory && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onViewHistory();
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                    >
-                      History
-                    </button>
-                  )}
-                  {exercise.techniqueUrl && onViewTechnique && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onViewTechnique(exercise.techniqueUrl as string);
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                    >
-                      Technique
-                    </button>
-                  )}
+            {/* Menu Button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowMenu(!showMenu)}
+                className="h-9 w-9 flex items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20"
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </button>
+
+              {showMenu && (
+                <>
                   <button
                     type="button"
-                    onClick={() => {
-                      handleRemove();
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-destructive hover:text-destructive/80 hover:bg-muted transition-colors"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </>
-            )}
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowMenu(false)}
+                    aria-label="Close menu"
+                  />
+                  <div className="absolute right-0 top-full mt-1 z-50 min-w-[160px] rounded-xl border border-border bg-card py-1 shadow-lg">
+                    {onViewHistory && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onViewHistory();
+                          setShowMenu(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                      >
+                        <History className="h-4 w-4" />
+                        History
+                      </button>
+                    )}
+                    {exercise.techniqueUrl && onViewTechnique && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onViewTechnique(exercise.techniqueUrl as string);
+                          setShowMenu(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Technique
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleRemove();
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-destructive hover:text-destructive/80 hover:bg-muted transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Remove
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </CardHeader>
 
-      {isExpanded && (
-        <CardContent className="space-y-2 px-5 pb-5 pt-0">
-          {/* Sets — no column header grid needed */}
-          {exercise.sets.map((set, index) => (
-            <SetRow
-              key={set._id}
-              setNumber={set.setNumber}
-              setType={set.setType}
-              weight={set.weight}
-              reps={set.reps}
-              rpe={set.rpe}
-              rir={set.rir}
-              restSeconds={exercise.restSeconds || defaultRestSeconds}
-              weightUnit={set.weightUnit}
-              isCompleted={set.isCompleted}
-              isPR={set.isPR}
-              previousWeight={previousPerformance?.sets[index]?.weight}
-              previousReps={previousPerformance?.sets[index]?.reps}
-              onComplete={(data) => handleCompleteSet(set._id, data)}
-              onUpdate={(data) => onUpdateSet(set._id, data as Partial<WorkoutSet>)}
-              onDelete={() => onDeleteSet(set._id)}
-              onStartRest={onStartRest}
-              showRpe={true}
-              showSetType={true}
-            />
-          ))}
+        {/* PR indicator */}
+        {prSets.length > 0 && (
+          <div className="absolute bottom-3 right-5 flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-yellow-300">
+            <span>★</span>
+            <span>{prSets.length} PR</span>
+          </div>
+        )}
+      </div>
 
-          {/* Add Set — inline, no dialog */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const lastSet = exercise.sets[exercise.sets.length - 1];
-              void onAddSet(
-                lastSet
-                  ? {
-                      weight: lastSet.weight,
-                      reps: lastSet.reps,
-                      rpe: lastSet.rpe,
-                      setType: lastSet.setType,
-                    }
-                  : undefined
-              );
-            }}
-            className="w-full mt-3 h-10 rounded-2xl border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
+      {/* Expand/Collapse Button for completed exercises */}
+      {isFullyCompleted && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full py-2 bg-muted/50 text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1"
+        >
+          {isExpanded ? "Hide Details" : "Show Details"}
+          <motion.span
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
           >
-            + Add Set
-          </Button>
-
-          {/* Finish Exercise — collapses the card */}
-          <Button
-            onClick={onToggleExpand}
-            className="w-full mt-1 h-10 rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95"
-          >
-            Finish Exercise
-          </Button>
-
-          {/* Stats */}
-          {completedSets.length > 0 && (
-            <div className="mt-3 flex items-center gap-4 border-t border-border pt-3 text-xs font-semibold text-muted-foreground">
-              <span>{completedSets.length} sets done</span>
-              {totalVolume > 0 && <span>{totalVolume.toLocaleString()} vol</span>}
-            </div>
-          )}
-        </CardContent>
+            ▼
+          </motion.span>
+        </button>
       )}
+
+      {/* Sets Content */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CardContent className="space-y-1 p-4 pt-3">
+              {/* Sets */}
+              {exercise.sets.map((set, index) => (
+                <SetRow
+                  key={set._id}
+                  setNumber={set.setNumber}
+                  setType={set.setType}
+                  weight={set.weight}
+                  reps={set.reps}
+                  rpe={set.rpe}
+                  rir={set.rir}
+                  restSeconds={exercise.restSeconds || defaultRestSeconds}
+                  weightUnit={set.weightUnit}
+                  isCompleted={set.isCompleted}
+                  isPR={set.isPR}
+                  previousWeight={previousPerformance?.sets[index]?.weight}
+                  previousReps={previousPerformance?.sets[index]?.reps}
+                  onComplete={(data) => handleCompleteSet(set._id, data)}
+                  onUpdate={(data) => onUpdateSet(set._id, data as Partial<WorkoutSet>)}
+                  onDelete={() => onDeleteSet(set._id)}
+                  onStartRest={onStartRest}
+                  showRpe={true}
+                  showSetType={true}
+                />
+              ))}
+
+              {/* Add Set Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const lastSet = exercise.sets[exercise.sets.length - 1];
+                  void onAddSet(
+                    lastSet
+                      ? {
+                          weight: lastSet.weight,
+                          reps: lastSet.reps,
+                          rpe: lastSet.rpe,
+                          setType: lastSet.setType,
+                        }
+                      : undefined
+                  );
+                }}
+                className="w-full mt-3 h-11 rounded-xl border-border text-xs font-black uppercase tracking-[0.15em] text-muted-foreground hover:text-foreground"
+              >
+                + Add Set
+              </Button>
+            </CardContent>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Confirm remove overlay */}
       {isRemoving && (

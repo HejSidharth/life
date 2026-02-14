@@ -9,3 +9,6 @@ export { RoutineWizard } from "./RoutineWizard";
 export { PlanSetupFlow } from "./PlanSetupFlow";
 export { NewWorkoutFlow } from "./NewWorkoutFlow";
 export { WorkoutFinishFlow } from "./WorkoutFinishFlow";
+export { TodayDayCard } from "./TodayDayCard";
+export { ActivePlanSection } from "./ActivePlanSection";
+export { PlanEditor } from "./PlanEditor";

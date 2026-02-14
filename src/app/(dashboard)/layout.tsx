@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 import { Dock } from "@/components/navigation/Dock";
 import { WizardProvider } from "@/context/WizardContext";
 
@@ -9,6 +10,9 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const pathname = usePathname();
+  const isPlanPage = pathname === "/plan";
+
   return (
     <WizardProvider>
       <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-foreground">
@@ -22,8 +26,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </motion.main>
 
-        {/* Modern iOS Dock */}
-        <Dock />
+        {/* Modern iOS Dock - Hidden on plan page */}
+        {!isPlanPage && <Dock />}
       </div>
     </WizardProvider>
   );

@@ -133,6 +133,7 @@ export function WorkoutFinishFlow({ open, onOpenChange, onComplete, onSaveAsTemp
       showCloseButton={true}
       closeOnOverlayClick={false}
       closeOnEscape={false}
+      showProgress={false}
       onComplete={async () => {
         await onComplete();
         setShowCelebration(true);
